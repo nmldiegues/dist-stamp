@@ -81,7 +81,6 @@ public class Customer {
      * =============================
      */
     final int id;
-    final List_t<Reservation_Info> reservationInfoList;
 
     /*
      * ==========================================================================
@@ -91,9 +90,13 @@ public class Customer {
      */
     public Customer(int id) {
 	this.id = id;
-	reservationInfoList = new List_t<Reservation_Info>();
+	Vacation.cache.put(this.id + ":List", new List_t<Reservation_Info>(this.id + ":List"));
     }
 
+    public List_t<Reservation_Info> getList() {
+	return (List_t<Reservation_Info>) Vacation.cache.get(this.id + ":List");
+    }
+    
     /*
      * ==========================================================================
      * === customer_compare -- Returns -1 if A < B, 0 if A = B, 1 if A > B
@@ -113,7 +116,7 @@ public class Customer {
     boolean customer_addReservationInfo(int type, int id, int price) {
 	Reservation_Info reservationInfo = new Reservation_Info(type, id, price);
 
-	reservationInfoList.add(reservationInfo);
+	getList().add(reservationInfo);
 	return true;
     }
 
@@ -125,13 +128,13 @@ public class Customer {
      * ===
      */
     boolean customer_removeReservationInfo(int type, int id) {
-	Reservation_Info reservationInfo = reservationInfoList.find(type, id);
+	Reservation_Info reservationInfo = getList().find(type, id);
 
 	if (reservationInfo == null) {
 	    return false;
 	}
 
-	boolean status = reservationInfoList.remove(reservationInfo);
+	boolean status = getList().remove(reservationInfo);
 	if (!status) {
 	    throw new OpacityException();
 	}
@@ -146,7 +149,7 @@ public class Customer {
      */
     int customer_getBill() {
 	int bill = 0;
-	for (Reservation_Info it : reservationInfoList) {
+	for (Reservation_Info it : getList()) {
 	    bill += it.price;
 	}
 

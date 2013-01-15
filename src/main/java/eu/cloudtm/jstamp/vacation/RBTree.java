@@ -3,23 +3,23 @@ package eu.cloudtm.jstamp.vacation;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import jvstm.VBox;
-import jvstm.util.RedBlackTree;
-
 public class RBTree<K extends Comparable<K>, V> {
 
-    protected final VBox<RedBlackTree<Entry<K, V>>> index;
+    protected RedBlackTree<Entry<K, V>> index;
+    protected final String cacheKey;
 
     @SuppressWarnings("unchecked")
-    public RBTree() {
-	index = new VBox<RedBlackTree<Entry<K, V>>>(RedBlackTree.EMPTY);
+    public RBTree(String cacheKey) {
+	index = RedBlackTree.EMPTY;
+	this.cacheKey = cacheKey;
     }
 
     public void put(K key, V value) {
 	if (value == null) {
 	    throw new RuntimeException("RBTree does not support null values!");
 	}
-	index.put(index.get().put(new Entry<K, V>(key, value)));
+	index = index.put(new Entry<K, V>(key, value));
+	Vacation.cache.put(cacheKey, this);
     }
 
     public V putIfAbsent(K key, V value) {
@@ -28,18 +28,19 @@ public class RBTree<K extends Comparable<K>, V> {
 	}
 
 	Entry<K, V> newEntry = new Entry<K, V>(key, value);
-	Entry<K, V> oldVal = index.get().get(newEntry);
+	Entry<K, V> oldVal = index.get(newEntry);
 	if (oldVal != null) {
 	    return oldVal.value;
 	}
 
-	index.put(index.get().put(newEntry));
+	index = index.put(newEntry);
+	Vacation.cache.put(cacheKey, this);
 	return null;
     }
 
     public V get(K key) {
 	Entry<K, V> entry = new Entry<K, V>(key, null);
-	Entry<K, V> oldVal = index.get().get(entry);
+	Entry<K, V> oldVal = index.get(entry);
 	if (oldVal != null) {
 	    return oldVal.value;
 	} else {
@@ -54,27 +55,28 @@ public class RBTree<K extends Comparable<K>, V> {
 	return new Iterable<V>() {
 	    @Override
 	    public Iterator<V> iterator() {
-		return new IndexIterator(index.get().iterator(entryMin, entryMax));
+		return new IndexIterator(index.iterator(entryMin, entryMax));
 	    }
 	};
     }
 
     public boolean remove(K key) {
 	Entry<K, V> entry = new Entry<K, V>(key, null);
-	Entry<K, V> existing = index.get().get(entry);
-	index.put(index.get().put(entry));
+	Entry<K, V> existing = index.get(entry);
+	index = index.put(entry);
+	Vacation.cache.put(cacheKey, this);
 	return (existing.value != null);
     }
 
     public Iterator<V> iterator() {
-	return new IndexIterator(index.get().iterator());
+	return new IndexIterator(index.iterator());
     }
 
     public Iterable<K> getKeys() {
 	return new Iterable<K>() {
 	    @Override
 	    public Iterator<K> iterator() {
-		return new KeyIterator(index.get().iterator());
+		return new KeyIterator(index.iterator());
 	    }
 	};
     }

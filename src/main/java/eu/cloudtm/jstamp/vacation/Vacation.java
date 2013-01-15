@@ -12,6 +12,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.remoting.transport.Transport;
 
 public class Vacation {
 
@@ -31,6 +32,7 @@ public class Vacation {
     }
 
     int CLIENTS;
+    int LOCAL_THREADS;
     int NUMBER;
     int QUERIES;
     int RELATIONS;
@@ -54,6 +56,8 @@ public class Vacation {
 	    String arg = argv[i];
 	    if (arg.equals("-c"))
 		CLIENTS = Integer.parseInt(argv[++i]);
+	    else if (arg.equals("-l"))
+		LOCAL_THREADS = Integer.parseInt(argv[++i]);
 	    else if (arg.equals("-n"))
 		NUMBER = Integer.parseInt(argv[++i]);
 	    else if (arg.equals("-q"))
@@ -140,7 +144,7 @@ public class Vacation {
 	Random randomPtr;
 	Client clients[];
 	int i;
-	int numClient = CLIENTS;
+	int numThreads = LOCAL_THREADS;
 	int numTransaction = TRANSACTIONS;
 	int numTransactionPerClient;
 	int numQueryPerTransaction = NUMBER;
@@ -154,12 +158,12 @@ public class Vacation {
 	randomPtr = new Random();
 	randomPtr.random_alloc();
 
-	clients = new Client[numClient];
+	clients = new Client[numThreads];
 
-	numTransactionPerClient = (int) ((double) numTransaction / (double) numClient + 0.5);
+	numTransactionPerClient = (int) ((double) numTransaction / (double) numThreads + 0.5);
 	queryRange = (int) (percentQuery / 100.0 * numRelation + 0.5);
 
-	for (i = 0; i < numClient; i++) {
+	for (i = 0; i < numThreads; i++) {
 	    clients[i] = new Client(i, managerPtr, numTransactionPerClient, numQueryPerTransaction, queryRange, percentUser);
 	}
 
@@ -181,11 +185,11 @@ public class Vacation {
     void checkTables(Manager managerPtr) {
 	int i;
 	int numRelation = RELATIONS;
-	RBTree<Integer, Customer> customerTablePtr = managerPtr.customerTable;
+	RBTree<Integer, Customer> customerTablePtr = managerPtr.getCustomerTable();
 	RBTree<Integer, Reservation> tables[] = new RBTree[3];
-	tables[0] = managerPtr.carTable;
-	tables[1] = managerPtr.flightTable;
-	tables[2] = managerPtr.roomTable;
+	tables[0] = managerPtr.getCarTable();
+	tables[1] = managerPtr.getFlightTable();
+	tables[2] = managerPtr.getRoomTable();
 	int numTable = 3;
 
 	int t;
@@ -231,60 +235,112 @@ public class Vacation {
     public static final AtomicInteger aborts = new AtomicInteger(0);
     public static Cache<String, Object> cache;
     public static TransactionManager txManager; 
-    
+
     public static void main(String argv[]) throws InterruptedException, IOException, NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
 	DefaultCacheManager defaultCacheManager = new DefaultCacheManager("/home/nmld/workspace/dist-stamp/ispn.xml");
 	cache = defaultCacheManager.getCache();
 	txManager = cache.getAdvancedCache().getTransactionManager();
-	
-	Manager manager;
+
+	Manager manager = null;
 	Client clients[];
 	long start;
 	long stop;
-	
-	// should be inevitable
-	txManager.begin();
-	cache.markAsWriteTransaction();
-	
+
 	/* Initialization */
 	Vacation vac = new Vacation();
 	vac.parseArgs(argv);
-	manager = vac.initializeManager();
+
+	Transport transport = defaultCacheManager.getTransport();
+	while (transport.getMembers().size() < vac.CLIENTS) {}
+
+	Thread.sleep(3000);
+
+	if (transport.isCoordinator()) {
+	    txManager.begin();
+	    cache.markAsWriteTransaction();
+	    cache.put("START_TOKEN", "NO");
+	    txManager.commit();
+	    System.out.println("Setup token NO");
+
+	    // should be inevitable
+	    txManager.begin();
+	    cache.markAsWriteTransaction();
+	    manager = vac.initializeManager();
+	    cache.put("MANAGER", manager);
+	    txManager.commit();
+	}
+
+	Thread.sleep(5000);
+
+	txManager.begin();
+	manager = (Manager)cache.get("MANAGER");
 	clients = vac.initializeClients(manager);
-	int numThread = vac.CLIENTS;
-	
 	txManager.commit();
-	
-	/* Run transactions */
-	// TODO this should no longer be done in this way. Perhaps 1 process initializes and marks some variable as true 
-	// for the others to RO and start? 
-	
+
+	Thread.sleep(1000);
+
+	if (transport.isCoordinator()) {
+	    txManager.begin();
+	    cache.markAsWriteTransaction();
+	    cache.put("START_TOKEN", "YES");
+	    txManager.commit();
+	    System.out.println("Setup token YES");
+	} else {
+	    while (true) {
+		txManager.begin();
+		String token = (String) cache.get("START_TOKEN");
+		txManager.commit();
+		if (token != null && token.equals("YES")) {
+		    System.out.println("Slave Starting");
+		    break;
+		}
+	    }
+	}
+
 	start = System.currentTimeMillis();
-	for (int i = 1; i < numThread; i++) {
+	for (int i = 1; i < vac.LOCAL_THREADS; i++) {
 	    clients[i].start();
 	}
 	clients[0].run();
-	for (int i = 1; i < numThread; i++) {
+	for (int i = 1; i < vac.LOCAL_THREADS; i++) {
 	    clients[i].join();
+	}
+
+
+	if (vac.CLIENTS > 1) {
+	    if (!transport.isCoordinator()) {
+		try {
+		    txManager.begin();
+		    cache.markAsWriteTransaction();
+		    cache.put("START_TOKEN", "NO");
+		    txManager.commit();
+		    System.out.println("Finish token");
+		} catch (Exception e) {}
+	    } else {
+		while (true) {
+		    txManager.begin();
+		    String token = (String) cache.get("START_TOKEN");
+		    txManager.commit();
+		    if (token != null && token.equals("NO")) {
+			System.out.println("Master detected finish");
+			break;
+		    }
+		}
+	    }
 	}
 
 	stop = System.currentTimeMillis();
 
-	// System.out.print("done.");
 	long diff = stop - start;
 	System.out.println(diff + " " + aborts.get());
-//	Stats stats = new Stats();
-//	stats.addStats(clients[0].stats);
-//	for (int i = 1; i < numThread; i++) {
-//	    stats.addStats(clients[i].stats);
-//	}
-//	System.out.print(stats);
-	
+
 	txManager.begin();
 	cache.markAsWriteTransaction();
 	vac.checkTables(manager);
 	txManager.commit();
-
+	System.out.println("Tables are consistent!");
+	
+	System.exit(0);
     }
 
 }

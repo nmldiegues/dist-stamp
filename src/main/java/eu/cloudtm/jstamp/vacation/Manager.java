@@ -85,25 +85,25 @@ public class Manager {
     final String CUSTOMER_TABLE = "customerTable";
 
     public Manager() {
-	cache.put(CAR_TABLE, new RBTree<Integer, Reservation>());
-	cache.put(ROOM_TABLE, new RBTree<Integer, Reservation>());
-	cache.put(FLIGHT_TABLE, new RBTree<Integer, Reservation>());
-	cache.put(CUSTOMER_TABLE, new RBTree<Integer, Customer>());
+	cache.put(CAR_TABLE, new RBTree<Integer, Reservation>(CAR_TABLE));
+	cache.put(ROOM_TABLE, new RBTree<Integer, Reservation>(ROOM_TABLE));
+	cache.put(FLIGHT_TABLE, new RBTree<Integer, Reservation>(FLIGHT_TABLE));
+	cache.put(CUSTOMER_TABLE, new RBTree<Integer, Customer>(CUSTOMER_TABLE));
     }
 
-    private RBTree<Integer, Reservation> getCarTable() {
+    protected RBTree<Integer, Reservation> getCarTable() {
 	return (RBTree<Integer, Reservation>) cache.get("carTable");
     }
     
-    private RBTree<Integer, Reservation> getRoomTable() {
+    protected RBTree<Integer, Reservation> getRoomTable() {
 	return (RBTree<Integer, Reservation>) cache.get("roomTable");
     }
     
-    private RBTree<Integer, Reservation> getFlightTable() {
+    protected RBTree<Integer, Reservation> getFlightTable() {
 	return (RBTree<Integer, Reservation>) cache.get("flightTable");
     }
     
-    private RBTree<Integer, Customer> getCustomerTable() {
+    protected RBTree<Integer, Customer> getCustomerTable() {
 	return (RBTree<Integer, Customer>) cache.get("customerTable");
     }
     
@@ -123,7 +123,7 @@ public class Manager {
 	    if (!reservation.reservation_addToTotal(num)) {
 		return false;
 	    }
-	    if (reservation.numTotal.get() == 0) {
+	    if (reservation.getNumTotal() == 0) {
 		boolean status = table.remove(id);
 		if (!status) {
 		    throw new OpacityException();
@@ -213,11 +213,11 @@ public class Manager {
 	    return false;
 	}
 
-	if (reservation.numUsed.get() > 0) {
+	if (reservation.getNumUsed() > 0) {
 	    return false; /* somebody has a reservation */
 	}
 
-	return addReservation(getFlightTable(), flightId, -reservation.numTotal.get(), -1);
+	return addReservation(getFlightTable(), flightId, -reservation.getNumTotal(), -1);
     }
 
     /*
@@ -267,7 +267,7 @@ public class Manager {
 	reservationTables[Definitions.RESERVATION_FLIGHT] = getFlightTable();
 
 	/* Cancel this customer's reservations */
-	reservationInfoList = customer.reservationInfoList;
+	reservationInfoList = customer.getList();
 
 	for (Reservation_Info reservationInfo : reservationInfoList) {
 	    Reservation reservation = reservationTables[reservationInfo.type].get(reservationInfo.id);
@@ -305,7 +305,7 @@ public class Manager {
 	int numFree = -1;
 	Reservation reservation = table.get(id);
 	if (reservation != null) {
-	    numFree = reservation.numFree.get();
+	    numFree = reservation.getNumFree();
 	}
 
 	return numFree;
@@ -321,7 +321,7 @@ public class Manager {
 	int price = -1;
 	Reservation reservation = table.get(id);
 	if (reservation != null) {
-	    price = reservation.price.get();
+	    price = reservation.getPrice();
 	}
 
 	return price;
@@ -447,7 +447,7 @@ public class Manager {
 	    return false;
 	}
 
-	if (!customer.customer_addReservationInfo(type, id, reservation.price.get())) {
+	if (!customer.customer_addReservationInfo(type, id, reservation.getPrice())) {
 	    /* Undo previous successful reservation */
 	    boolean status = reservation.reservation_cancel();
 	    if (!status) {

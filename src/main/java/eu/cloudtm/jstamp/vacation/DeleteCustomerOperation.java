@@ -2,9 +2,6 @@ package eu.cloudtm.jstamp.vacation;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import jstamp.jvstm.CommandCollectAborts;
-import jvstm.Transaction;
-
 public class DeleteCustomerOperation extends Operation {
 
     protected static final AtomicLong aborts = new AtomicLong(0L);
@@ -19,15 +16,16 @@ public class DeleteCustomerOperation extends Operation {
 
     @Override
     public void doOperation() {
-	CommandCollectAborts cmd = new CommandCollectAborts() {
-	    public void runTx() {
+	CommandCollectAborts<Void> cmd = new CommandCollectAborts<Void>() {
+	    public Void runTx() {
 		int bill = managerPtr.manager_queryCustomerBill(customerId);
 		if (bill >= 0) {
 		    managerPtr.manager_deleteCustomer(customerId);
 		}
+		return null;
 	    }
 	};
-	Transaction.transactionallyDo(cmd);
+	cmd.doIt();
 	if (cmd.getAborts() > 0) {
 	    Vacation.aborts.addAndGet(cmd.getAborts());
 	}

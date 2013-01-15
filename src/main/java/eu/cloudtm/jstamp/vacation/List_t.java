@@ -5,27 +5,23 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import jvstm.VBox;
-import jvstm.util.Cons;
-
 public class List_t<E> implements Iterable<E> {
 
     @SuppressWarnings("unchecked")
-    protected final VBox<Cons<E>> elements = new VBox<Cons<E>>((Cons<E>) Cons.empty());
+    protected Cons<E> elements = (Cons<E>) Cons.empty();
+    protected final String cacheKey;
 
-    public List_t() {
-    }
-
-    public List_t(List_t<E> bag) {
-	throw new Error("List_t(List_t<E> bag) not implemented");
+    public List_t(String cacheKey) {
+	this.cacheKey = cacheKey;
     }
 
     public void add(E element) {
-	elements.put(elements.get().cons(element));
+	elements = elements.cons(element);
+	Vacation.cache.put(cacheKey, this);
     }
 
     public E find(int type, int id) {
-	for (E iter : elements.get()) {
+	for (E iter : elements) {
 	    if (iter instanceof Reservation_Info) {
 		Reservation_Info resIter = (Reservation_Info) iter;
 		if (resIter.type == type && resIter.id == id) {
@@ -39,13 +35,15 @@ public class List_t<E> implements Iterable<E> {
     }
 
     public boolean remove(E element) {
-	Cons<E> oldElems = elements.get();
+	Cons<E> oldElems = elements;
 	Cons<E> newElems = oldElems.removeFirst(element);
 
 	if (oldElems == newElems) {
+	    Vacation.cache.put(cacheKey, this);
 	    return false;
 	} else {
-	    elements.put(newElems);
+	    elements = newElems;
+	    Vacation.cache.put(cacheKey, this);
 	    return true;
 	}
     }
@@ -55,7 +53,7 @@ public class List_t<E> implements Iterable<E> {
     @Override
     public Iterator<E> iterator() {
 	List<E> snapshot = new ArrayList<E>();
-	for (E element : elements.get())
+	for (E element : elements)
 	    snapshot.add(element);
 	Collections.reverse(snapshot);
 	return snapshot.iterator();

@@ -2,8 +2,7 @@ package eu.cloudtm.jstamp.vacation;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import jstamp.jvstm.CommandCollectAborts;
-import jvstm.Transaction;
+import javax.transaction.Transaction;
 
 public class UpdateTablesOperation extends Operation {
 
@@ -43,12 +42,13 @@ public class UpdateTablesOperation extends Operation {
 
     @Override
     public void doOperation() {
-	CommandCollectAborts cmd = new CommandCollectAborts() {
-	    public void runTx() {
+	CommandCollectAborts<Void> cmd = new CommandCollectAborts<Void>() {
+	    public Void runTx() {
 		updateTablesNotNested();
+		return null;
 	    }
 	};
-	Transaction.transactionallyDo(cmd);
+	cmd.doIt();
 	if (cmd.getAborts() > 0) {
 	    Vacation.aborts.addAndGet(cmd.getAborts());
 	}

@@ -1,7 +1,6 @@
 package eu.cloudtm.jstamp.vacation;
 
-import jstamp.jvstm.CommandCollectAborts;
-import jvstm.Transaction;
+import javax.transaction.Transaction;
 
 public class MakeReservationOperation extends Operation {
 
@@ -43,12 +42,13 @@ public class MakeReservationOperation extends Operation {
 
     @Override
     public void doOperation() {
-	CommandCollectAborts cmd = new CommandCollectAborts() {
-	    public void runTx() {
+	CommandCollectAborts<Void> cmd = new CommandCollectAborts<Void>() {
+	    public Void runTx() {
 		makeReservationNotNested();
+		return null;
 	    }
 	};
-	Transaction.transactionallyDo(cmd);
+	cmd.doIt();
 	if (cmd.getAborts() > 0) {
 	    Vacation.aborts.addAndGet(cmd.getAborts());
 	}
