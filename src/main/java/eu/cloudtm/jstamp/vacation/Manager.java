@@ -78,7 +78,9 @@ package eu.cloudtm.jstamp.vacation;
 
 import static eu.cloudtm.jstamp.vacation.Vacation.cache;
 
-public class Manager {
+import java.io.Serializable;
+
+public class Manager implements Serializable {
     final String CAR_TABLE = "carTable";
     final String ROOM_TABLE = "roomTable";
     final String FLIGHT_TABLE = "flightTable";
@@ -107,7 +109,7 @@ public class Manager {
 	return (RBTree<Integer, Customer>) cache.get("customerTable");
     }
     
-    boolean addReservation(RBTree<Integer, Reservation> table, int id, int num, int price) {
+    boolean addReservation(RBTree<Integer, Reservation> table, String type, int id, int num, int price) {
 	Reservation reservation;
 
 	reservation = table.get(id);
@@ -116,7 +118,7 @@ public class Manager {
 	    if (num < 1 || price < 0) {
 		return false;
 	    }
-	    reservation = new Reservation(id, num, price);
+	    reservation = new Reservation(type, id, num, price);
 	    table.put(id, reservation);
 	} else {
 	    /* Update existing reservation */
@@ -145,7 +147,7 @@ public class Manager {
      * =========
      */
     boolean manager_addCar(int carId, int numCars, int price) {
-	return addReservation(getCarTable(), carId, numCars, price);
+	return addReservation(getCarTable(), "car", carId, numCars, price);
     }
 
     /*
@@ -159,7 +161,7 @@ public class Manager {
      */
     boolean manager_deleteCar(int carId, int numCar) {
 	/* -1 keeps old price */
-	return addReservation(getCarTable(), carId, -numCar, -1);
+	return addReservation(getCarTable(), "car", carId, -numCar, -1);
     }
 
     /*
@@ -171,7 +173,7 @@ public class Manager {
      * =========
      */
     boolean manager_addRoom(int roomId, int numRoom, int price) {
-	return addReservation(getRoomTable(), roomId, numRoom, price);
+	return addReservation(getRoomTable(), "room", roomId, numRoom, price);
     }
 
     /*
@@ -185,7 +187,7 @@ public class Manager {
      */
     boolean manager_deleteRoom(int roomId, int numRoom) {
 	/* -1 keeps old price */
-	return addReservation(getRoomTable(), roomId, -numRoom, -1);
+	return addReservation(getRoomTable(), "room", roomId, -numRoom, -1);
     }
 
     /*
@@ -197,7 +199,7 @@ public class Manager {
      * ===================
      */
     boolean manager_addFlight(int flightId, int numSeat, int price) {
-	return addReservation(getFlightTable(), flightId, numSeat, price);
+	return addReservation(getFlightTable(), "flight", flightId, numSeat, price);
     }
 
     /*
@@ -217,7 +219,7 @@ public class Manager {
 	    return false; /* somebody has a reservation */
 	}
 
-	return addReservation(getFlightTable(), flightId, -reservation.getNumTotal(), -1);
+	return addReservation(getFlightTable(), "flight", flightId, -reservation.getNumTotal(), -1);
     }
 
     /*

@@ -25,10 +25,11 @@
  */
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public final class Cons<E> implements Iterable<E> { 
+public final class Cons<E> implements Iterable<E>, Serializable { 
     protected static final Cons EMPTY = new Cons(null, null);
 
     public final static <T> Cons<T> empty() {

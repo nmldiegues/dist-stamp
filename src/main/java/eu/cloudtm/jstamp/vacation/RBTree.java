@@ -1,9 +1,10 @@
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class RBTree<K extends Comparable<K>, V> {
+public class RBTree<K extends Comparable<K>, V> implements Serializable {
 
     protected RedBlackTree<Entry<K, V>> index;
     protected final String cacheKey;

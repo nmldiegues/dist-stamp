@@ -25,10 +25,11 @@
  */
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E> { 
+public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E>, Serializable { 
     private static final boolean RED = true;
     private static final boolean BLACK = false;
 

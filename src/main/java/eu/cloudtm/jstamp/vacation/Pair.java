@@ -25,7 +25,9 @@
  */
 package eu.cloudtm.jstamp.vacation;
 
-public class Pair<E1,E2> {
+import java.io.Serializable;
+
+public class Pair<E1,E2> implements Serializable {
     public E1 first;
     public E2 second;
 

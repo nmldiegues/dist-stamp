@@ -1,5 +1,7 @@
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
+
 
 /* =============================================================================
  *
@@ -72,7 +74,7 @@ package eu.cloudtm.jstamp.vacation;
  * =============================================================================
  */
 
-public class Customer {
+public class Customer implements Serializable {
 
     /*
      * ==========================================================================

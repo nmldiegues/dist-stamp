@@ -1,11 +1,12 @@
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class List_t<E> implements Iterable<E> {
+public class List_t<E> implements Iterable<E>, Serializable{
 
     @SuppressWarnings("unchecked")
     protected Cons<E> elements = (Cons<E>) Cons.empty();

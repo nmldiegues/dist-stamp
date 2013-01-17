@@ -1,4 +1,4 @@
-package eu.cloudtm.jstamp.vacation;
+package test;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -9,13 +9,13 @@ import org.infinispan.CacheException;
 public abstract class CommandCollectAborts<T> {
 
     private int aborts = 0;
-
+    
     public int getAborts() {
 	return this.aborts;
     }
-
+    
     public abstract T runTx();
-
+    
     public T doIt() {
 	T result = null;
 	boolean txFinished = false;
@@ -23,13 +23,13 @@ public abstract class CommandCollectAborts<T> {
 	while (!txFinished) {
 	    try {
 		aborts++;
-		Vacation.txManager.begin();
-		Vacation.cache.markAsWriteTransaction();
-
+		RW1.txManager.begin();
+		RW1.cache.markAsWriteTransaction();
+		
 		result = runTx();
-
-		Vacation.txManager.commit();
-
+		
+		RW1.txManager.commit();
+		    
 		txFinished = true;
 		return result;
 	    } catch (CacheException ce) {
@@ -46,14 +46,14 @@ public abstract class CommandCollectAborts<T> {
 	    } finally {
 		if (!txFinished) {
 		    try {
-			Vacation.txManager.rollback();
+			RW1.txManager.rollback();
 		    } catch(IllegalStateException ise) {
 			// If the transaction is in a state where it cannot be rolled back.
 			// Pedro -- happen when the commit fails. When commit fails, it invokes the rollback().
 			//          so rollback() will be invoked again, but the transaction no longer exists
 			// Pedro -- just ignore it
 		    } catch (Exception ex) {
-			throw new RuntimeException(ex);
+			ex.printStackTrace();
 		    }
 		}
 	    }

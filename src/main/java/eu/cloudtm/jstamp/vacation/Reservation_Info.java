@@ -1,11 +1,13 @@
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
+
 /* =============================================================================
  * reservation_info_alloc
  * -- Returns NULL on failure
  * =============================================================================
  */
-public class Reservation_Info {
+public class Reservation_Info implements Serializable {
     final int id;
     final int type;
     final int price;

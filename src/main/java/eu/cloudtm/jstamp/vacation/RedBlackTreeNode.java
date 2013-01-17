@@ -25,11 +25,12 @@
  */
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class RedBlackTreeNode<K,V> {
+public class RedBlackTreeNode<K,V> implements Serializable {
     private static final boolean RED = true;
     private static final boolean BLACK = false;
 

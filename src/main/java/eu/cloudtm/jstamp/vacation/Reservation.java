@@ -74,7 +74,9 @@ package eu.cloudtm.jstamp.vacation;
 import static eu.cloudtm.jstamp.vacation.Vacation.cache;
 import static eu.cloudtm.jstamp.vacation.Vacation.txManager;
 
-public class Reservation implements Comparable<Reservation> {
+import java.io.Serializable;
+
+public class Reservation implements Comparable<Reservation>, Serializable {
     final int id;
     final String PREFIX; 
     final String NUM_USED = "numUsed";
@@ -82,9 +84,9 @@ public class Reservation implements Comparable<Reservation> {
     final String NUM_TOTAL = "numTotal";
     final String PRICE = "price";
 
-    public Reservation(int id, int numTotal, int price) {
+    public Reservation(String type, int id, int numTotal, int price) {
 	this.id = id;
-	this.PREFIX = "Reservation:" + id + ":";
+	this.PREFIX = "Reservation:" + type + ":" + id + ":";
 	cache.put(PREFIX + NUM_USED, 0);
 	cache.put(PREFIX + NUM_FREE, numTotal);
 	cache.put(PREFIX + NUM_TOTAL, numTotal);
