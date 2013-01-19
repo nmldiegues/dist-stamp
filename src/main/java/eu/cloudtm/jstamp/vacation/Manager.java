@@ -81,12 +81,14 @@ import static eu.cloudtm.jstamp.vacation.Vacation.cache;
 import java.io.Serializable;
 
 public class Manager implements Serializable {
-    final RBTree<Integer, Reservation> carTable;
-    final RBTree<Integer, Reservation> roomTable;
-    final RBTree<Integer, Reservation> flightTable;
-    final RBTree<Integer, Customer> customerTable;
+    /* final */ RBTree<Integer, Reservation> carTable;
+    /* final */ RBTree<Integer, Reservation> roomTable;
+    /* final */ RBTree<Integer, Reservation> flightTable;
+    /* final */ RBTree<Integer, Customer> customerTable;
 
-    public Manager() {
+    public Manager() { }
+    
+    public Manager(boolean dummy) {
 	carTable = new RBTree<Integer, Reservation>("carTable");
 	roomTable = new RBTree<Integer, Reservation>("roomTable");
 	flightTable = new RBTree<Integer, Reservation>("flightTable");

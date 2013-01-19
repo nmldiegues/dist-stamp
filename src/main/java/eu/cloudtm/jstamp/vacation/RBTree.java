@@ -7,8 +7,12 @@ import java.util.NoSuchElementException;
 
 public class RBTree<K extends Comparable<K>, V> implements Serializable {
 
-    protected final String cacheKey;
+    /* final */ protected String cacheKey;
 
+    public RBTree() {
+	
+    }
+    
     @SuppressWarnings("unchecked")
     public RBTree(String cacheKey) {
 	this.cacheKey = cacheKey;
@@ -55,18 +59,6 @@ public class RBTree<K extends Comparable<K>, V> implements Serializable {
 	}
     }
 
-    public Iterable<V> getRange(K minKey, K maxKey) {
-	final Entry<K, V> entryMin = new Entry<K, V>(minKey, null);
-	final Entry<K, V> entryMax = new Entry<K, V>(maxKey, null);
-
-	return new Iterable<V>() {
-	    @Override
-	    public Iterator<V> iterator() {
-		return new IndexIterator(getIndex().iterator(entryMin, entryMax));
-	    }
-	};
-    }
-
     public boolean remove(K key) {
 	Entry<K, V> entry = new Entry<K, V>(key, null);
 	Entry<K, V> existing = getIndex().get(entry);
@@ -74,104 +66,7 @@ public class RBTree<K extends Comparable<K>, V> implements Serializable {
 	return (existing.value != null);
     }
 
-    public Iterator<V> iterator() {
-	return new IndexIterator(getIndex().iterator());
-    }
-
-    public Iterable<K> getKeys() {
-	return new Iterable<K>() {
-	    @Override
-	    public Iterator<K> iterator() {
-		return new KeyIterator(getIndex().iterator());
-	    }
-	};
-    }
-
-    class KeyIterator implements Iterator<K> {
-	private final Iterator<Entry<K, V>> iter;
-	private Entry<K, V> next;
-
-	KeyIterator(Iterator<Entry<K, V>> iter) {
-	    this.iter = iter;
-	    updateNext();
-	}
-
-	private void updateNext() {
-	    while (iter.hasNext()) {
-		Entry<K, V> nextEntry = iter.next();
-		if (nextEntry.value != null) {
-		    next = nextEntry;
-		    return;
-		}
-	    }
-	    next = null;
-	}
-
-	@Override
-	public boolean hasNext() {
-	    return next != null;
-	}
-
-	@Override
-	public K next() {
-	    if (next == null) {
-		throw new NoSuchElementException();
-	    } else {
-		K key = next.key;
-		updateNext();
-		return key;
-	    }
-	}
-
-	@Override
-	public void remove() {
-	    throw new Error("Cannot remove keys");
-	}
-    }
-
-    class IndexIterator implements Iterator<V> {
-	private final Iterator<Entry<K, V>> iter;
-	private Entry<K, V> next;
-
-	IndexIterator(Iterator<Entry<K, V>> iter) {
-	    this.iter = iter;
-	    updateNext();
-	}
-
-	private void updateNext() {
-	    while (iter.hasNext()) {
-		Entry<K, V> nextEntry = iter.next();
-		if (nextEntry.value != null) {
-		    next = nextEntry;
-		    return;
-		}
-	    }
-	    next = null;
-	}
-
-	@Override
-	public boolean hasNext() {
-	    return next != null;
-	}
-
-	@Override
-	public V next() {
-	    if (next == null) {
-		throw new NoSuchElementException();
-	    } else {
-		V result = next.value;
-		updateNext();
-		return result;
-	    }
-	}
-
-	@Override
-	public void remove() {
-	    throw new Error("Cannot remove indexes");
-	}
-    }
-
-    static class Entry<K extends Comparable<K>, V> implements Comparable<Entry<K, V>> {
+    static class Entry<K extends Comparable<K>, V> implements Comparable<Entry<K, V>>, Serializable {
 	private final K key;
 	private final V value;
 

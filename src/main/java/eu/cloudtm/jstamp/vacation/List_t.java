@@ -8,8 +8,10 @@ import java.util.List;
 
 public class List_t<E> implements Iterable<E>, Serializable{
 
-    protected final String cacheKey;
+    protected /* final */ String cacheKey;
 
+    public List_t() { }
+    
     public List_t(String cacheKey) {
 	this.cacheKey = cacheKey;
 	Vacation.cache.put(cacheKey, (Cons<E>) Cons.empty());

@@ -77,13 +77,15 @@ import static eu.cloudtm.jstamp.vacation.Vacation.txManager;
 import java.io.Serializable;
 
 public class Reservation implements Comparable<Reservation>, Serializable {
-    final int id;
-    final String PREFIX; 
-    final String NUM_USED = "numUsed";
-    final String NUM_FREE = "numFree";
-    final String NUM_TOTAL = "numTotal";
-    final String PRICE = "price";
+    /* final */ int id;
+    /* final */ String PREFIX; 
+    static final String NUM_USED = "numUsed";
+    static final String NUM_FREE = "numFree";
+    static final String NUM_TOTAL = "numTotal";
+    static final String PRICE = "price";
 
+    public Reservation() { }
+    
     public Reservation(String type, int id, int numTotal, int price) {
 	this.id = id;
 	this.PREFIX = "Reservation:" + type + ":" + id + ":";

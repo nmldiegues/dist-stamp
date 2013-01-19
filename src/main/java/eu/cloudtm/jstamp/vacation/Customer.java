@@ -1,5 +1,7 @@
 package eu.cloudtm.jstamp.vacation;
 
+import java.io.Serializable;
+
 
 /* =============================================================================
  *
@@ -72,7 +74,7 @@ package eu.cloudtm.jstamp.vacation;
  * =============================================================================
  */
 
-public class Customer {
+public class Customer implements Serializable {
 
     /*
      * ==========================================================================
@@ -80,8 +82,8 @@ public class Customer {
      * ================================================
      * =============================
      */
-    final int id;
-    final List_t<Reservation_Info> reservationInfoList;
+    /* final */ int id;
+    /* final */ List_t<Reservation_Info> reservationInfoList;
 
     /*
      * ==========================================================================
@@ -89,6 +91,8 @@ public class Customer {
      * ========================================================
      * =====================
      */
+    public Customer() { }
+    
     public Customer(int id) {
 	this.id = id;
 	reservationInfoList = new List_t<Reservation_Info>("List:" + this.id + ":elements");

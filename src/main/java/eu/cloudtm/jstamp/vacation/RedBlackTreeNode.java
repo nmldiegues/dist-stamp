@@ -46,6 +46,7 @@ public class RedBlackTreeNode<K,V> implements Serializable {
     private RedBlackTreeNode<K,V> left;
     private RedBlackTreeNode<K,V> right;
 
+    public RedBlackTreeNode() { }
 
     private RedBlackTreeNode(boolean color, K key, V value, RedBlackTreeNode<K,V> left, RedBlackTreeNode<K,V> right) {
         this.color = color;
@@ -264,61 +265,4 @@ public class RedBlackTreeNode<K,V> implements Serializable {
     }
 
 
-    public Iterator<RedBlackTreeNode<K,V>> iterator() {
-        return new RBTIterator<K,V>(this);
-    }
-
-    static class RBTIterator<K,V> implements Iterator<RedBlackTreeNode<K,V>> {
-        protected Cons<RedBlackTreeNode<K,V>> path;
-        protected RedBlackTreeNode<K,V> next;
-
-        RBTIterator() {
-            this.path = Cons.empty();
-        }
-        
-        RBTIterator(RedBlackTreeNode<K,V> root) {
-            this();
-            if (root != EMPTY) {
-                findLeftmost(root);
-            }
-        }
-
-        private void findLeftmost(RedBlackTreeNode<K,V> node) {
-            while (node.left != EMPTY) {
-                path = path.cons(node);
-                node = node.left;
-            }
-            this.next = node;
-        }
-        
-        public boolean hasNext() { 
-            return next != null;
-        }
-        
-        public RedBlackTreeNode<K,V> next() {
-            if (next == null) {
-                throw new NoSuchElementException();
-            } else {
-                RedBlackTreeNode<K,V> result = next;
-
-                if (next.right != EMPTY) {
-                    findLeftmost(next.right);
-                } else {
-                    // no elements to the right, so climb up the tree
-                    if (path == Cons.EMPTY) {
-                        next = null;
-                    } else {
-                        next = path.first;
-                        path = path.rest;
-                    }
-                }
-
-                return result;
-            }
-        }
-        
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
 }

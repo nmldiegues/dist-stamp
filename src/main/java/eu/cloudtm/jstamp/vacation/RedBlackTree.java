@@ -40,6 +40,7 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
     private RedBlackTree<E> left;
     private RedBlackTree<E> right;
 
+    public RedBlackTree() { }
 
     private RedBlackTree(boolean color, E elem, RedBlackTree<E> left, RedBlackTree<E> right) {
         this.color = color;
@@ -186,120 +187,12 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
         return candidate;
     }
 
-
+    @Override
     public Iterator<E> iterator() {
-        return new RBTIterator<E>(this);
+	// TODO Auto-generated method stub
+	return null;
     }
 
-    private static final Iterator EMPTY_ITERATOR = new Iterator() {
-            public boolean hasNext() { 
-                return false;
-            }
-        
-            public Object next() {
-                throw new NoSuchElementException();
-            }
-        
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
 
-    public Iterator<E> iterator(E from, E to) {
-        RedBlackTree<E> lower = getNodeLowerBound(from);
-        RedBlackTree<E> upper = getNodeUpperBound(to);
 
-        if ((lower == upper) || (lower == null) || (upper == null) || (lower.elem.compareTo(upper.elem) > 0)) {
-            return EMPTY_ITERATOR;
-        }
-
-        return new BoundedRBTIterator<E>(this, lower, upper);
-    }
-
-    static class RBTIterator<T extends Comparable<? super T>> implements Iterator<T> {
-        protected Cons<RedBlackTree<T>> path;
-        protected RedBlackTree<T> next;
-
-        RBTIterator() {
-            this.path = Cons.empty();
-        }
-        
-        RBTIterator(RedBlackTree<T> root) {
-            this();
-            if (root != EMPTY) {
-                findLeftmost(root);
-            }
-        }
-
-        private void findLeftmost(RedBlackTree<T> node) {
-            while (node.left != EMPTY) {
-                path = path.cons(node);
-                node = node.left;
-            }
-            this.next = node;
-        }
-        
-        public boolean hasNext() { 
-            return next != null;
-        }
-        
-        public T next() {
-            if (next == null) {
-                throw new NoSuchElementException();
-            } else {
-                T result = next.elem;
-
-                if (next.right != EMPTY) {
-                    findLeftmost(next.right);
-                } else {
-                    // no elements to the right, so climb up the tree
-                    if (path == Cons.EMPTY) {
-                        next = null;
-                    } else {
-                        next = path.first;
-                        path = path.rest;
-                    }
-                }
-
-                return result;
-            }
-        }
-        
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    static class BoundedRBTIterator<T extends Comparable<? super T>> extends RBTIterator<T> {
-        private RedBlackTree<T> last;
-
-        
-        BoundedRBTIterator(RedBlackTree<T> root, RedBlackTree<T> from, RedBlackTree<T> to) {
-            super();
-            this.last = to;
-
-            findStart(root, from);
-        }
-
-        private void findStart(RedBlackTree<T> node, RedBlackTree<T> target) {
-            while (node != target) {
-                path = path.cons(node);
-                int cmp = target.elem.compareTo(node.elem);
-                if (cmp < 0) {
-                    node = node.left;
-                } else {
-                    node = node.right;
-                }
-            }
-            this.next = node;
-        }
-
-        public T next() {
-            T result = super.next();
-            if (next == last || next.elem.compareTo(last.elem) == 0) {
-                next = null;
-            }
-            return result;
-         }
-    }
 }

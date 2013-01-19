@@ -90,7 +90,7 @@ public class Vacation {
 
 	Random randomPtr = new Random();
 	randomPtr.random_alloc();
-	Manager managerPtr = new Manager();
+	Manager managerPtr = new Manager(true);
 
 	int numRelation = RELATIONS;
 	int ids[] = new int[numRelation];

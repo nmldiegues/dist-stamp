@@ -30,15 +30,23 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public final class Cons<E> implements Iterable<E>, Serializable { 
-    protected static final Cons EMPTY = new Cons(null, null);
 
     public final static <T> Cons<T> empty() {
-        return (Cons<T>)EMPTY;
+        return new Cons<T>(true);
     }
 
-    protected final E first;
-    protected final Cons<E> rest;
+    protected /* final */ boolean empty;
+    protected /* final */ E first;
+    protected /* final */ Cons<E> rest;
 
+    public Cons() {
+	
+    }
+    
+    private Cons(boolean empty) {
+	this.empty = true;
+    }
+    
     private Cons(E first, Cons<E> rest) {
         this.first = first;
         this.rest = rest;
@@ -73,75 +81,12 @@ public final class Cons<E> implements Iterable<E>, Serializable {
         }
     }
 
-    public final Cons<E> removeAll(Object elem) {
-        Cons<E> lastFound = lastMember(elem);
-        if (lastFound == null) {
-            return this;
-        } else if (lastFound == this) {
-            return rest;
-        } else {
-            // skip over conses containing the elem
-            Cons<E> next = this;
-            if (elem == null) {
-                while ((next != lastFound) && (next.first == null)) {
-                    next = next.rest;
-                }
-            } else {
-                while ((next != lastFound) && (elem.equals(next.first))) {
-                    next = next.rest;
-                }
-            }
-
-
-            if (next == lastFound) {
-                return next.rest;
-            }
-
-            // We have to allocate new Cons cells until we reach the lastFound cons
-            Cons<E> newCons = ((Cons<E>)EMPTY).cons(next.first);
-            next = next.rest;
-
-            if (elem == null) {
-                while (next != lastFound) {
-                    if (next.first != null) {
-                        newCons = newCons.cons(next.first);
-                    }
-                    next = next.rest;
-                }
-            } else {
-                while (next != lastFound) {
-                    if (! elem.equals(next.first)) {
-                        newCons = newCons.cons(next.first);
-                    }
-                    next = next.rest;
-                }
-            }
-            
-            // share the rest
-            newCons = newCons.reverseInto(next.rest);
-            return newCons;
-        }
-    }
-
-    public final Cons<E> removeCons(Cons<?> cons) {
-        Cons<?> iter = this;
-        while ((iter != cons) && (iter != EMPTY)) {
-            iter = iter.rest;
-        }
-        
-        if (iter == EMPTY) {
-            return this;
-        } else {
-            return removeExistingCons(cons);
-        }
-    }
-
     private final Cons<E> removeExistingCons(Cons<?> cons) {
         if (cons == this) {
             return rest;
         } else {
             // We have to allocate new Cons cells until we reach the cons to remove
-            Cons<E> newCons = ((Cons<E>)EMPTY).cons(first);
+            Cons<E> newCons = (new Cons<E>()).cons(first);
             Cons<E> next = rest;
             while (next != cons) {
                 newCons = newCons.cons(next.first);
@@ -154,35 +99,21 @@ public final class Cons<E> implements Iterable<E>, Serializable {
         }
     }
 
-    public final int size() {
-        int size = 0;
-        Cons<?> iter = this;
-        while (iter != EMPTY) {
-            size++;
-            iter = iter.rest;
-        }
-        return size;
-    }
-
     public final boolean isEmpty() {
-        return (this == EMPTY);
-    }
-
-    public final boolean contains(Object elem) {
-        return member(elem) != null;
+        return empty;
     }
 
     public final Cons<E> member(Object elem) {
         Cons<E> iter = this;
         if (elem == null) {
-            while (iter != EMPTY) {
+            while (! iter.empty) {
                 if (iter.first == null) {
                     return iter;
                 }
                 iter = iter.rest;
             }
         } else {
-            while (iter != EMPTY) {
+            while (! iter.empty) {
                 if (elem.equals(iter.first)) {
                     return iter;
                 }
@@ -192,36 +123,10 @@ public final class Cons<E> implements Iterable<E>, Serializable {
         return null;
     }
 
-    public final Cons<E> lastMember(Object elem) {
-        Cons<E> found = null;
-        Cons<E> iter = this;
-        if (elem == null) {
-            while (iter != EMPTY) {
-                if (iter.first == null) {
-                    found = iter;
-                }
-                iter = iter.rest;
-            }
-        } else {
-            while (iter != EMPTY) {
-                if (elem.equals(iter.first)) {
-                    found = iter;
-                }
-                iter = iter.rest;
-            }
-        }
-
-        return found;
-    }
-
-    public final Cons<E> reverse() {
-        return reverseInto((Cons<E>)EMPTY);
-    }
-
     public final Cons<E> reverseInto(Cons<E> tail) {
         Cons<E> result = tail;
         Cons<E> iter = this;
-        while (iter != EMPTY) {
+        while (! iter.empty) {
             result = result.cons(iter.first);
             iter = iter.rest;
         }
@@ -240,11 +145,11 @@ public final class Cons<E> implements Iterable<E>, Serializable {
         }
         
         public final boolean hasNext() { 
-            return (current != EMPTY);
+            return (! current.empty);
         }
         
         public final T next() { 
-            if (current == EMPTY) {
+            if (current.empty) {
                 throw new NoSuchElementException();
             } else {
                 T result = current.first;

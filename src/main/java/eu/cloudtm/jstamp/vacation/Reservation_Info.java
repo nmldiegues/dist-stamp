@@ -8,10 +8,12 @@ import java.io.Serializable;
  * =============================================================================
  */
 public class Reservation_Info implements Serializable {
-    final int id;
-    final int type;
-    final int price;
+    /* final */ int id;
+    /* final */ int type;
+    /* final */ int price;
 
+    public Reservation_Info() { }
+    
     public Reservation_Info(int type, int id, int price) {
 	this.type = type;
 	this.id = id;
