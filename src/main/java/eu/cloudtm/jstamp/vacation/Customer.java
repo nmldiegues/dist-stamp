@@ -1,7 +1,5 @@
 package eu.cloudtm.jstamp.vacation;
 
-import java.io.Serializable;
-
 
 /* =============================================================================
  *
@@ -74,7 +72,7 @@ import java.io.Serializable;
  * =============================================================================
  */
 
-public class Customer implements Serializable {
+public class Customer {
 
     /*
      * ==========================================================================
@@ -83,6 +81,7 @@ public class Customer implements Serializable {
      * =============================
      */
     final int id;
+    final List_t<Reservation_Info> reservationInfoList;
 
     /*
      * ==========================================================================
@@ -92,13 +91,9 @@ public class Customer implements Serializable {
      */
     public Customer(int id) {
 	this.id = id;
-	Vacation.cache.put(this.id + ":List", new List_t<Reservation_Info>(this.id + ":List"));
+	reservationInfoList = new List_t<Reservation_Info>("List:" + this.id + ":elements");
     }
 
-    public List_t<Reservation_Info> getList() {
-	return (List_t<Reservation_Info>) Vacation.cache.get(this.id + ":List");
-    }
-    
     /*
      * ==========================================================================
      * === customer_compare -- Returns -1 if A < B, 0 if A = B, 1 if A > B
@@ -118,7 +113,7 @@ public class Customer implements Serializable {
     boolean customer_addReservationInfo(int type, int id, int price) {
 	Reservation_Info reservationInfo = new Reservation_Info(type, id, price);
 
-	getList().add(reservationInfo);
+	reservationInfoList.add(reservationInfo);
 	return true;
     }
 
@@ -130,13 +125,13 @@ public class Customer implements Serializable {
      * ===
      */
     boolean customer_removeReservationInfo(int type, int id) {
-	Reservation_Info reservationInfo = getList().find(type, id);
+	Reservation_Info reservationInfo = reservationInfoList.find(type, id);
 
 	if (reservationInfo == null) {
 	    return false;
 	}
 
-	boolean status = getList().remove(reservationInfo);
+	boolean status = reservationInfoList.remove(reservationInfo);
 	if (!status) {
 	    throw new OpacityException();
 	}
@@ -151,7 +146,7 @@ public class Customer implements Serializable {
      */
     int customer_getBill() {
 	int bill = 0;
-	for (Reservation_Info it : getList()) {
+	for (Reservation_Info it : reservationInfoList) {
 	    bill += it.price;
 	}
 

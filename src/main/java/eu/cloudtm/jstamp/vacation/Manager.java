@@ -81,34 +81,18 @@ import static eu.cloudtm.jstamp.vacation.Vacation.cache;
 import java.io.Serializable;
 
 public class Manager implements Serializable {
-    final String CAR_TABLE = "carTable";
-    final String ROOM_TABLE = "roomTable";
-    final String FLIGHT_TABLE = "flightTable";
-    final String CUSTOMER_TABLE = "customerTable";
+    final RBTree<Integer, Reservation> carTable;
+    final RBTree<Integer, Reservation> roomTable;
+    final RBTree<Integer, Reservation> flightTable;
+    final RBTree<Integer, Customer> customerTable;
 
     public Manager() {
-	cache.put(CAR_TABLE, new RBTree<Integer, Reservation>(CAR_TABLE));
-	cache.put(ROOM_TABLE, new RBTree<Integer, Reservation>(ROOM_TABLE));
-	cache.put(FLIGHT_TABLE, new RBTree<Integer, Reservation>(FLIGHT_TABLE));
-	cache.put(CUSTOMER_TABLE, new RBTree<Integer, Customer>(CUSTOMER_TABLE));
+	carTable = new RBTree<Integer, Reservation>("carTable");
+	roomTable = new RBTree<Integer, Reservation>("roomTable");
+	flightTable = new RBTree<Integer, Reservation>("flightTable");
+	customerTable = new RBTree<Integer, Customer>("customerTable");
     }
 
-    protected RBTree<Integer, Reservation> getCarTable() {
-	return (RBTree<Integer, Reservation>) cache.get("carTable");
-    }
-    
-    protected RBTree<Integer, Reservation> getRoomTable() {
-	return (RBTree<Integer, Reservation>) cache.get("roomTable");
-    }
-    
-    protected RBTree<Integer, Reservation> getFlightTable() {
-	return (RBTree<Integer, Reservation>) cache.get("flightTable");
-    }
-    
-    protected RBTree<Integer, Customer> getCustomerTable() {
-	return (RBTree<Integer, Customer>) cache.get("customerTable");
-    }
-    
     boolean addReservation(RBTree<Integer, Reservation> table, String type, int id, int num, int price) {
 	Reservation reservation;
 
@@ -147,7 +131,7 @@ public class Manager implements Serializable {
      * =========
      */
     boolean manager_addCar(int carId, int numCars, int price) {
-	return addReservation(getCarTable(), "car", carId, numCars, price);
+	return addReservation(carTable, "car", carId, numCars, price);
     }
 
     /*
@@ -161,7 +145,7 @@ public class Manager implements Serializable {
      */
     boolean manager_deleteCar(int carId, int numCar) {
 	/* -1 keeps old price */
-	return addReservation(getCarTable(), "car", carId, -numCar, -1);
+	return addReservation(carTable, "car", carId, -numCar, -1);
     }
 
     /*
@@ -173,7 +157,7 @@ public class Manager implements Serializable {
      * =========
      */
     boolean manager_addRoom(int roomId, int numRoom, int price) {
-	return addReservation(getRoomTable(), "room", roomId, numRoom, price);
+	return addReservation(roomTable, "room", roomId, numRoom, price);
     }
 
     /*
@@ -187,7 +171,7 @@ public class Manager implements Serializable {
      */
     boolean manager_deleteRoom(int roomId, int numRoom) {
 	/* -1 keeps old price */
-	return addReservation(getRoomTable(), "room", roomId, -numRoom, -1);
+	return addReservation(roomTable, "room", roomId, -numRoom, -1);
     }
 
     /*
@@ -199,7 +183,7 @@ public class Manager implements Serializable {
      * ===================
      */
     boolean manager_addFlight(int flightId, int numSeat, int price) {
-	return addReservation(getFlightTable(), "flight", flightId, numSeat, price);
+	return addReservation(flightTable, "flight", flightId, numSeat, price);
     }
 
     /*
@@ -210,7 +194,7 @@ public class Manager implements Serializable {
      * =========================================================================
      */
     boolean manager_deleteFlight(int flightId) {
-	Reservation reservation = getFlightTable().get(flightId);
+	Reservation reservation = flightTable.get(flightId);
 	if (reservation == null) {
 	    return false;
 	}
@@ -219,7 +203,7 @@ public class Manager implements Serializable {
 	    return false; /* somebody has a reservation */
 	}
 
-	return addReservation(getFlightTable(), "flight", flightId, -reservation.getNumTotal(), -1);
+	return addReservation(flightTable, "flight", flightId, -reservation.getNumTotal(), -1);
     }
 
     /*
@@ -232,12 +216,12 @@ public class Manager implements Serializable {
     boolean manager_addCustomer(int customerId) {
 	Customer customer;
 
-	if (getCustomerTable().get(customerId) != null) {
+	if (customerTable.get(customerId) != null) {
 	    return false;
 	}
 
 	customer = new Customer(customerId);
-	Customer oldCustomer = getCustomerTable().putIfAbsent(customerId, customer);
+	Customer oldCustomer = customerTable.putIfAbsent(customerId, customer);
 	if (oldCustomer != null) {
 	    throw new OpacityException();
 	}
@@ -259,17 +243,17 @@ public class Manager implements Serializable {
 	List_t<Reservation_Info> reservationInfoList;
 	boolean status;
 
-	customer = getCustomerTable().get(customerId);
+	customer = customerTable.get(customerId);
 	if (customer == null) {
 	    return false;
 	}
 
-	reservationTables[Definitions.RESERVATION_CAR] = getCarTable();
-	reservationTables[Definitions.RESERVATION_ROOM] = getRoomTable();
-	reservationTables[Definitions.RESERVATION_FLIGHT] = getFlightTable();
+	reservationTables[Definitions.RESERVATION_CAR] = carTable;
+	reservationTables[Definitions.RESERVATION_ROOM] = roomTable;
+	reservationTables[Definitions.RESERVATION_FLIGHT] = flightTable;
 
 	/* Cancel this customer's reservations */
-	reservationInfoList = customer.getList();
+	reservationInfoList = customer.reservationInfoList;
 
 	for (Reservation_Info reservationInfo : reservationInfoList) {
 	    Reservation reservation = reservationTables[reservationInfo.type].get(reservationInfo.id);
@@ -282,7 +266,7 @@ public class Manager implements Serializable {
 	    }
 	}
 
-	status = getCustomerTable().remove(customerId);
+	status = customerTable.remove(customerId);
 	if (!status) {
 	    throw new OpacityException();
 	}
@@ -337,7 +321,7 @@ public class Manager implements Serializable {
      * =======================================
      */
     int manager_queryCar(int carId) {
-	return queryNumFree(getCarTable(), carId);
+	return queryNumFree(carTable, carId);
     }
 
     /*
@@ -348,7 +332,7 @@ public class Manager implements Serializable {
      * =========================
      */
     int manager_queryCarPrice(int carId) {
-	return queryPrice(getCarTable(), carId);
+	return queryPrice(carTable, carId);
     }
 
     /*
@@ -359,7 +343,7 @@ public class Manager implements Serializable {
      * =========================================
      */
     int manager_queryRoom(int roomId) {
-	return queryNumFree(getRoomTable(), roomId);
+	return queryNumFree(roomTable, roomId);
     }
 
     /*
@@ -370,7 +354,7 @@ public class Manager implements Serializable {
      * =============================
      */
     int manager_queryRoomPrice(int roomId) {
-	return queryPrice(getRoomTable(), roomId);
+	return queryPrice(roomTable, roomId);
     }
 
     /*
@@ -381,7 +365,7 @@ public class Manager implements Serializable {
      * =============================================
      */
     int manager_queryFlight(int flightId) {
-	return queryNumFree(getFlightTable(), flightId);
+	return queryNumFree(flightTable, flightId);
     }
 
     /*
@@ -392,7 +376,7 @@ public class Manager implements Serializable {
      * ===================================
      */
     int manager_queryFlightPrice(int flightId) {
-	return queryPrice(getFlightTable(), flightId);
+	return queryPrice(flightTable, flightId);
     }
 
     /*
@@ -407,7 +391,7 @@ public class Manager implements Serializable {
 	int bill = -1;
 	Customer customer;
 
-	customer = getCustomerTable().get(customerId);
+	customer = customerTable.get(customerId);
 
 	if (customer != null) {
 	    bill = customer.customer_getBill();
@@ -469,7 +453,7 @@ public class Manager implements Serializable {
      * ===============================================
      */
     boolean manager_reserveCar(int customerId, int carId) {
-	return reserve(getCarTable(), getCustomerTable(), customerId, carId, Definitions.RESERVATION_CAR);
+	return reserve(carTable, customerTable, customerId, carId, Definitions.RESERVATION_CAR);
     }
 
     /*
@@ -480,7 +464,7 @@ public class Manager implements Serializable {
      * ===================================================
      */
     boolean manager_reserveRoom(int customerId, int roomId) {
-	return reserve(getRoomTable(), getCustomerTable(), customerId, roomId, Definitions.RESERVATION_ROOM);
+	return reserve(roomTable, customerTable, customerId, roomId, Definitions.RESERVATION_ROOM);
     }
 
     /*
@@ -491,7 +475,7 @@ public class Manager implements Serializable {
      * =========================================================
      */
     boolean manager_reserveFlight(int customerId, int flightId) {
-	return reserve(getFlightTable(), getCustomerTable(), customerId, flightId, Definitions.RESERVATION_FLIGHT);
+	return reserve(flightTable, customerTable, customerId, flightId, Definitions.RESERVATION_FLIGHT);
     }
 
     /*
@@ -539,7 +523,7 @@ public class Manager implements Serializable {
      * =================================================================
      */
     boolean manager_cancelCar(int customerId, int carId) {
-	return cancel(getCarTable(), getCustomerTable(), customerId, carId, Definitions.RESERVATION_CAR);
+	return cancel(carTable, customerTable, customerId, carId, Definitions.RESERVATION_CAR);
     }
 
     /*
@@ -550,7 +534,7 @@ public class Manager implements Serializable {
      * =================================================================
      */
     boolean manager_cancelRoom(int customerId, int roomId) {
-	return cancel(getRoomTable(), getCustomerTable(), customerId, roomId, Definitions.RESERVATION_ROOM);
+	return cancel(roomTable, customerTable, customerId, roomId, Definitions.RESERVATION_ROOM);
     }
 
     /*
@@ -561,6 +545,6 @@ public class Manager implements Serializable {
      * =====================================================================
      */
     boolean manager_cancelFlight(int customerId, int flightId) {
-	return cancel(getFlightTable(), getCustomerTable(), customerId, flightId, Definitions.RESERVATION_FLIGHT);
+	return cancel(flightTable, customerTable, customerId, flightId, Definitions.RESERVATION_FLIGHT);
     }
 }

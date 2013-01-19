@@ -8,21 +8,27 @@ import java.util.List;
 
 public class List_t<E> implements Iterable<E>, Serializable{
 
-    @SuppressWarnings("unchecked")
-    protected Cons<E> elements = (Cons<E>) Cons.empty();
     protected final String cacheKey;
 
     public List_t(String cacheKey) {
 	this.cacheKey = cacheKey;
+	Vacation.cache.put(cacheKey, (Cons<E>) Cons.empty());
+    }
+    
+    private void putElements(Cons<E> elems) {
+	Vacation.cache.put(cacheKey, elems);
+    }
+    
+    private Cons<E> getElements() {
+	return ((Cons<E>) Vacation.cache.get(cacheKey));
     }
 
     public void add(E element) {
-	elements = elements.cons(element);
-	Vacation.cache.put(cacheKey, this);
+	putElements(getElements().cons(element));
     }
 
     public E find(int type, int id) {
-	for (E iter : elements) {
+	for (E iter : getElements()) {
 	    if (iter instanceof Reservation_Info) {
 		Reservation_Info resIter = (Reservation_Info) iter;
 		if (resIter.type == type && resIter.id == id) {
@@ -36,15 +42,13 @@ public class List_t<E> implements Iterable<E>, Serializable{
     }
 
     public boolean remove(E element) {
-	Cons<E> oldElems = elements;
+	Cons<E> oldElems = getElements();
 	Cons<E> newElems = oldElems.removeFirst(element);
 
 	if (oldElems == newElems) {
-	    Vacation.cache.put(cacheKey, this);
 	    return false;
 	} else {
-	    elements = newElems;
-	    Vacation.cache.put(cacheKey, this);
+	    putElements(newElems);
 	    return true;
 	}
     }
@@ -54,7 +58,7 @@ public class List_t<E> implements Iterable<E>, Serializable{
     @Override
     public Iterator<E> iterator() {
 	List<E> snapshot = new ArrayList<E>();
-	for (E element : elements)
+	for (E element : getElements())
 	    snapshot.add(element);
 	Collections.reverse(snapshot);
 	return snapshot.iterator();

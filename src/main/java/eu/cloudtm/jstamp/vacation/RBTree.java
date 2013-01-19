@@ -4,23 +4,30 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+
 public class RBTree<K extends Comparable<K>, V> implements Serializable {
 
-    protected RedBlackTree<Entry<K, V>> index;
     protected final String cacheKey;
 
     @SuppressWarnings("unchecked")
     public RBTree(String cacheKey) {
-	index = RedBlackTree.EMPTY;
 	this.cacheKey = cacheKey;
+	Vacation.cache.put(cacheKey, RedBlackTree.EMPTY);
+    }
+    
+    private RedBlackTree<Entry<K, V>> getIndex() {
+	return (RedBlackTree<Entry<K, V>>)Vacation.cache.get(cacheKey);
+    }
+    
+    private void putIndex(RedBlackTree<Entry<K, V>> index) {
+	Vacation.cache.put(cacheKey, index);
     }
 
     public void put(K key, V value) {
 	if (value == null) {
 	    throw new RuntimeException("RBTree does not support null values!");
 	}
-	index = index.put(new Entry<K, V>(key, value));
-	Vacation.cache.put(cacheKey, this);
+	putIndex(getIndex().put(new Entry<K, V>(key, value)));
     }
 
     public V putIfAbsent(K key, V value) {
@@ -29,19 +36,18 @@ public class RBTree<K extends Comparable<K>, V> implements Serializable {
 	}
 
 	Entry<K, V> newEntry = new Entry<K, V>(key, value);
-	Entry<K, V> oldVal = index.get(newEntry);
+	Entry<K, V> oldVal = getIndex().get(newEntry);
 	if (oldVal != null) {
 	    return oldVal.value;
 	}
 
-	index = index.put(newEntry);
-	Vacation.cache.put(cacheKey, this);
+	putIndex(getIndex().put(newEntry));
 	return null;
     }
 
     public V get(K key) {
 	Entry<K, V> entry = new Entry<K, V>(key, null);
-	Entry<K, V> oldVal = index.get(entry);
+	Entry<K, V> oldVal = getIndex().get(entry);
 	if (oldVal != null) {
 	    return oldVal.value;
 	} else {
@@ -56,28 +62,27 @@ public class RBTree<K extends Comparable<K>, V> implements Serializable {
 	return new Iterable<V>() {
 	    @Override
 	    public Iterator<V> iterator() {
-		return new IndexIterator(index.iterator(entryMin, entryMax));
+		return new IndexIterator(getIndex().iterator(entryMin, entryMax));
 	    }
 	};
     }
 
     public boolean remove(K key) {
 	Entry<K, V> entry = new Entry<K, V>(key, null);
-	Entry<K, V> existing = index.get(entry);
-	index = index.put(entry);
-	Vacation.cache.put(cacheKey, this);
+	Entry<K, V> existing = getIndex().get(entry);
+	putIndex(getIndex().put(entry));
 	return (existing.value != null);
     }
 
     public Iterator<V> iterator() {
-	return new IndexIterator(index.iterator());
+	return new IndexIterator(getIndex().iterator());
     }
 
     public Iterable<K> getKeys() {
 	return new Iterable<K>() {
 	    @Override
 	    public Iterator<K> iterator() {
-		return new KeyIterator(index.iterator());
+		return new KeyIterator(getIndex().iterator());
 	    }
 	};
     }
@@ -179,11 +184,6 @@ public class RBTree<K extends Comparable<K>, V> implements Serializable {
 	public int compareTo(Entry<K, V> other) {
 	    return this.key.compareTo(other.key);
 	}
-    }
-
-    @Override
-    public Object clone() {
-	throw new Error(this.getClass().getCanonicalName() + ".clone() not implemented");
     }
 
 }

@@ -185,11 +185,11 @@ public class Vacation {
     void checkTables(Manager managerPtr) {
 	int i;
 	int numRelation = RELATIONS;
-	RBTree<Integer, Customer> customerTablePtr = managerPtr.getCustomerTable();
+	RBTree<Integer, Customer> customerTablePtr = managerPtr.customerTable;
 	RBTree<Integer, Reservation> tables[] = new RBTree[3];
-	tables[0] = managerPtr.getCarTable();
-	tables[1] = managerPtr.getFlightTable();
-	tables[2] = managerPtr.getRoomTable();
+	tables[0] = managerPtr.carTable;
+	tables[1] = managerPtr.flightTable;
+	tables[2] = managerPtr.roomTable;
 	int numTable = 3;
 
 	int t;
