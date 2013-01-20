@@ -1,6 +1,7 @@
 package eu.cloudtm.jstamp.vacation;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.transaction.HeuristicMixedException;
@@ -12,6 +13,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 
 public class Vacation {
@@ -270,6 +272,12 @@ public class Vacation {
 	    cache.put("MANAGER", manager);
 	    txManager.commit();
 	    System.out.println("[Coordinator] Finished setup");
+	} else {
+	    txManager.begin();
+	    cache.markAsWriteTransaction();
+	    cache.put("FINISH_TOKEN_" + transport.getAddress(), "NO");
+	    txManager.commit();
+	    System.out.println("[Slave] Setup finish token to no: FINISH_TOKEN_" + transport.getAddress());
 	}
 
 	Thread.sleep(5000);
@@ -318,27 +326,35 @@ public class Vacation {
 	}
 
 
-//	if (vac.CLIENTS > 1) {
-//	    if (!transport.isCoordinator()) {
-//		try {
-//		    txManager.begin();
-//		    cache.markAsWriteTransaction();
-//		    cache.put("START_TOKEN", "NO");
-//		    txManager.commit();
-//		    System.out.println("Finish token");
-//		} catch (Exception e) {}
-//	    } else {
-//		while (true) {
-//		    txManager.begin();
-//		    String token = (String) cache.get("START_TOKEN");
-//		    txManager.commit();
-//		    if (token != null && token.equals("NO")) {
-//			System.out.println("Master detected finish");
-//			break;
-//		    }
-//		}
-//	    }
-//	}
+	List<Address> members = transport.getMembers();
+	if (vac.CLIENTS > 1) {
+	    if (!transport.isCoordinator()) {
+		try {
+		    txManager.begin();
+		    cache.markAsWriteTransaction();
+		    cache.put("FINISH_TOKEN_" + transport.getAddress(), "YES");
+		    txManager.commit();
+		    System.out.println("[Slave] Finished and publicized token " + "FINISH_TOKEN_" + transport.getAddress());
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
+	    } else {
+		for (Address addr : members) {
+		    if (addr.equals(transport.getAddress())) {
+			continue;
+		    }
+		    while (true) {
+			txManager.begin();
+			String token = (String) cache.get("FINISH_TOKEN_" + addr);
+			txManager.commit();
+			if (token != null && token.equals("YES")) {
+			    System.out.println("[Coordinator] Detected finish of FINISH_TOKEN_" + addr);
+			    break;
+			}
+		    }
+		}
+	    }
+	}
 
 	stop = System.currentTimeMillis();
 
