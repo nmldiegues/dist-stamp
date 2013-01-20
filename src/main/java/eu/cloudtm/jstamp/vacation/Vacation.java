@@ -292,7 +292,7 @@ public class Vacation {
 	System.out.println("[Any] Got the manager: " + manager);
 	clients = vac.initializeClients(manager);
 
-	Thread.sleep(1000);
+	Thread.sleep(2000);
 
 	if (transport.isCoordinator()) {
 	    System.out.println("[Coordinator] Setting token to YES");
