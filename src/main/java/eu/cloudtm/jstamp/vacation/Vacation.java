@@ -260,42 +260,53 @@ public class Vacation {
 	    cache.markAsWriteTransaction();
 	    cache.put("START_TOKEN", "NO");
 	    txManager.commit();
-	    System.out.println("Setup token NO");
+	    System.out.println("[Coordinator] Setup token to NO");
 
+	    System.out.println("[Coordinator] Starting setup");
 	    // should be inevitable
 	    txManager.begin();
 	    cache.markAsWriteTransaction();
 	    manager = vac.initializeManager();
 	    cache.put("MANAGER", manager);
 	    txManager.commit();
+	    System.out.println("[Coordinator] Finished setup");
 	}
 
 	Thread.sleep(5000);
 
-	txManager.begin();
-	manager = (Manager)cache.get("MANAGER");
+	manager = null;
+	System.out.println("[Any] Grabbing manager");
+	while (manager == null) {
+	    txManager.begin();
+	    manager = (Manager)cache.get("MANAGER");
+	    txManager.commit();
+	}
+	System.out.println("[Any] Got the manager: " + manager);
 	clients = vac.initializeClients(manager);
-	txManager.commit();
 
 	Thread.sleep(1000);
 
 	if (transport.isCoordinator()) {
+	    System.out.println("[Coordinator] Setting token to YES");
 	    txManager.begin();
 	    cache.markAsWriteTransaction();
 	    cache.put("START_TOKEN", "YES");
 	    txManager.commit();
-	    System.out.println("Setup token YES");
+	    System.out.println("[Coordinator] Token is YES");
 	} else {
+	    System.out.println("[Slave] Grabbing TOKEN");
 	    while (true) {
 		txManager.begin();
 		String token = (String) cache.get("START_TOKEN");
 		txManager.commit();
 		if (token != null && token.equals("YES")) {
-		    System.out.println("Slave Starting");
+		    System.out.println("[Slave] Got TOKEN YES");
 		    break;
 		}
 	    }
 	}
+	
+	System.out.println("[Any] Starting local threads");
 
 	start = System.currentTimeMillis();
 	for (int i = 1; i < vac.LOCAL_THREADS; i++) {
@@ -307,39 +318,42 @@ public class Vacation {
 	}
 
 
-	if (vac.CLIENTS > 1) {
-	    if (!transport.isCoordinator()) {
-		try {
-		    txManager.begin();
-		    cache.markAsWriteTransaction();
-		    cache.put("START_TOKEN", "NO");
-		    txManager.commit();
-		    System.out.println("Finish token");
-		} catch (Exception e) {}
-	    } else {
-		while (true) {
-		    txManager.begin();
-		    String token = (String) cache.get("START_TOKEN");
-		    txManager.commit();
-		    if (token != null && token.equals("NO")) {
-			System.out.println("Master detected finish");
-			break;
-		    }
-		}
-	    }
-	}
+//	if (vac.CLIENTS > 1) {
+//	    if (!transport.isCoordinator()) {
+//		try {
+//		    txManager.begin();
+//		    cache.markAsWriteTransaction();
+//		    cache.put("START_TOKEN", "NO");
+//		    txManager.commit();
+//		    System.out.println("Finish token");
+//		} catch (Exception e) {}
+//	    } else {
+//		while (true) {
+//		    txManager.begin();
+//		    String token = (String) cache.get("START_TOKEN");
+//		    txManager.commit();
+//		    if (token != null && token.equals("NO")) {
+//			System.out.println("Master detected finish");
+//			break;
+//		    }
+//		}
+//	    }
+//	}
 
 	stop = System.currentTimeMillis();
 
 	long diff = stop - start;
 	System.out.println(diff + " " + aborts.get());
 
-	txManager.begin();
-	cache.markAsWriteTransaction();
-	vac.checkTables(manager);
-	txManager.commit();
-	System.out.println("Tables are consistent!");
 	
+	if (transport.isCoordinator()) {
+	    txManager.begin();
+	    vac.checkTables(manager);
+	    txManager.commit();
+	    System.out.println("Tables are consistent!");
+	}
+	
+	Thread.sleep(1000000);
 	System.exit(0);
     }
 

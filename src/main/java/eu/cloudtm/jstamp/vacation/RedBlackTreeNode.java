@@ -27,8 +27,6 @@ package eu.cloudtm.jstamp.vacation;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 public class RedBlackTreeNode<K,V> implements Serializable {
     private static final boolean RED = true;
@@ -38,8 +36,7 @@ public class RedBlackTreeNode<K,V> implements Serializable {
     private static final int MODE_IF_ABSENT = 1;
     private static final int MODE_ALWAYS = 2;
 
-    public static final RedBlackTreeNode EMPTY = new RedBlackTreeNode(BLACK, null, null, null, null);
-
+    private boolean empty;
     private boolean color;
     private K key;
     private V value;
@@ -48,6 +45,10 @@ public class RedBlackTreeNode<K,V> implements Serializable {
 
     public RedBlackTreeNode() { }
 
+    public RedBlackTreeNode(boolean empty) {
+	this.empty = empty;
+    }
+    
     private RedBlackTreeNode(boolean color, K key, V value, RedBlackTreeNode<K,V> left, RedBlackTreeNode<K,V> right) {
         this.color = color;
         this.key = key;
@@ -109,9 +110,9 @@ public class RedBlackTreeNode<K,V> implements Serializable {
                         Comparator<? super K> comparator, 
                         Pair<RedBlackTreeNode<K,V>,V> result, 
                         int mode) {
-        if (this == EMPTY) {
+        if (this.empty) {
             if (mode != MODE_REPLACE) {
-                result.first = new RedBlackTreeNode<K,V>(RED, key, value, EMPTY, EMPTY);
+                result.first = new RedBlackTreeNode<K,V>(RED, key, value, this, this);
             }
         } else {
             int cmp = comparator.compare(key, this.key);
@@ -139,9 +140,9 @@ public class RedBlackTreeNode<K,V> implements Serializable {
                                   V value, 
                                   Pair<RedBlackTreeNode<K,V>,V> result, 
                                   int mode) {
-        if (this == EMPTY) {
+        if (this.empty) {
             if (mode != MODE_REPLACE) {
-                result.first = new RedBlackTreeNode<K,V>(RED, (K)key, value, EMPTY, EMPTY);
+                result.first = new RedBlackTreeNode<K,V>(RED, (K)key, value, this, this);
             }
         } else {
             int cmp = key.compareTo(this.key);
@@ -233,7 +234,7 @@ public class RedBlackTreeNode<K,V> implements Serializable {
     private RedBlackTreeNode<K,V> findNode(K key, Comparator<? super K> comparator) {
         RedBlackTreeNode<K,V> iter = this;
 
-        while (iter != EMPTY) {
+        while (! iter.empty ) {
             int cmp = comparator.compare(key, iter.key);
             if (cmp < 0) {
                 iter = iter.left;
@@ -250,7 +251,7 @@ public class RedBlackTreeNode<K,V> implements Serializable {
     private RedBlackTreeNode<K,V> findNodeComparable(Comparable<K> key) {
         RedBlackTreeNode<K,V> iter = this;
 
-        while (iter != EMPTY) {
+        while (! iter.empty ) {
             int cmp = key.compareTo(iter.key);
             if (cmp < 0) {
                 iter = iter.left;

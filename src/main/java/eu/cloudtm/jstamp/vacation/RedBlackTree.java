@@ -27,21 +27,23 @@ package eu.cloudtm.jstamp.vacation;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E>, Serializable { 
     private static final boolean RED = true;
     private static final boolean BLACK = false;
 
-    public static final RedBlackTree EMPTY = new RedBlackTree(BLACK, null, null, null);
-
     private boolean color;
     private E elem;
     private RedBlackTree<E> left;
     private RedBlackTree<E> right;
+    private boolean empty = false;
 
     public RedBlackTree() { }
 
+    public RedBlackTree(boolean empty) {
+	this.empty = true;
+    }
+    
     private RedBlackTree(boolean color, E elem, RedBlackTree<E> left, RedBlackTree<E> right) {
         this.color = color;
         this.elem = elem;
@@ -50,7 +52,7 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
     }
 
     public int size() {
-        if (this == EMPTY) {
+        if (this.empty) {
             return 0;
         } else {
             return left.size() + right.size() + 1;
@@ -64,8 +66,8 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
     }
 
     private RedBlackTree<E> buildTree(E elem) {
-        if (this == EMPTY) {
-            return new RedBlackTree<E>(RED, elem, EMPTY, EMPTY);
+        if (this.empty) {
+            return new RedBlackTree<E>(RED, elem, this, this);
         } else {
             int cmp = elem.compareTo(this.elem);
             if (cmp < 0) {
@@ -80,7 +82,7 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
     
     private RedBlackTree<E> lbalance(boolean color, E elem, RedBlackTree<E> left, RedBlackTree<E> right) {
         if (color == BLACK) {
-            if ((left != EMPTY) && (left.color == RED)) {
+            if ((!left.empty) && (left.color == RED)) {
                 if (left.left.color == RED) {
                     return new RedBlackTree<E>(RED, 
                                                left.elem, 
@@ -102,7 +104,7 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
 
     private RedBlackTree<E> rbalance(boolean color, E elem, RedBlackTree<E> left, RedBlackTree<E> right) {
         if (color == BLACK) {
-            if ((right != EMPTY) && (right.color == RED)) {
+            if ((!right.empty) && (right.color == RED)) {
                 if (right.left.color == RED) {
                     return new RedBlackTree<E>(RED, 
                                                right.left.elem, 
@@ -134,7 +136,7 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
     protected RedBlackTree<E> getNode(E elem) {
         RedBlackTree<E> iter = this;
 
-        while (iter != EMPTY) {
+        while (!iter.empty) {
             int cmp = elem.compareTo(iter.elem);
             if (cmp < 0) {
                 iter = iter.left;
@@ -153,7 +155,7 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
         RedBlackTree<E> iter = this;
         RedBlackTree<E> candidate = null;
 
-        while (iter != EMPTY) {
+        while (!iter.empty) {
             int cmp = elem.compareTo(iter.elem);
             if (cmp == 0) {
                 return iter;
@@ -172,7 +174,7 @@ public class RedBlackTree<E extends Comparable<? super E>> implements Iterable<E
         RedBlackTree<E> iter = this;
         RedBlackTree<E> candidate = null;
 
-        while (iter != EMPTY) {
+        while (!iter.empty) {
             int cmp = elem.compareTo(iter.elem);
             if (cmp == 0) {
                 return iter;

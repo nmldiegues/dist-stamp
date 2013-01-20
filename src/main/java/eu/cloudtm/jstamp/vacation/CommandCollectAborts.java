@@ -42,6 +42,7 @@ public abstract class CommandCollectAborts<T> {
 	    } catch(HeuristicRollbackException hre) {
 		//If a heuristic decision to roll back the transaction was made
 	    } catch (Exception e) { // any other exception 	 out
+		e.printStackTrace();
 		throw new RuntimeException(e);
 	    } finally {
 		if (!txFinished) {

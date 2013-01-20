@@ -1,8 +1,6 @@
 package eu.cloudtm.jstamp.vacation;
 
 import java.io.Serializable;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 
 public class RBTree<K extends Comparable<K>, V> implements Serializable {
@@ -16,11 +14,15 @@ public class RBTree<K extends Comparable<K>, V> implements Serializable {
     @SuppressWarnings("unchecked")
     public RBTree(String cacheKey) {
 	this.cacheKey = cacheKey;
-	Vacation.cache.put(cacheKey, RedBlackTree.EMPTY);
+	Vacation.cache.put(cacheKey, new RedBlackTree<Entry<K, V>>(true));
     }
     
     private RedBlackTree<Entry<K, V>> getIndex() {
-	return (RedBlackTree<Entry<K, V>>)Vacation.cache.get(cacheKey);
+	RedBlackTree<Entry<K, V>> v = (RedBlackTree<Entry<K, V>>)Vacation.cache.get(cacheKey);
+	if (v == null) {
+	    System.out.println("null!");
+	}
+	return v;
     }
     
     private void putIndex(RedBlackTree<Entry<K, V>> index) {
