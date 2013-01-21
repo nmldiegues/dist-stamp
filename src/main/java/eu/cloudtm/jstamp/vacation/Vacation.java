@@ -56,7 +56,7 @@ public class Vacation {
 	int opterr = 0;
 
 	setDefaultParams();
-	for (int i = 0; i < argv.length; i++) {
+	for (int i = 1; i < argv.length; i++) {
 	    String arg = argv[i];
 	    if (arg.equals("-c"))
 		CLIENTS = Integer.parseInt(argv[++i]);
@@ -218,7 +218,7 @@ public class Vacation {
     public static TransactionManager txManager; 
 
     public static void main(String argv[]) throws InterruptedException, IOException, NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
-	DefaultCacheManager defaultCacheManager = new DefaultCacheManager("/home/nmld/workspace/dist-stamp/ispn.xml");
+	DefaultCacheManager defaultCacheManager = new DefaultCacheManager(argv[0]);
 	cache = defaultCacheManager.getCache();
 	txManager = cache.getAdvancedCache().getTransactionManager();
 
