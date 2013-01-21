@@ -24,6 +24,7 @@ public class Vacation {
     public static void displayUsage(String appName) {
 	System.out.println("Usage: %s [options]\n" + appName);
 	System.out.println("\nOptions:                                             (defaults)\n");
+	System.out.println("first of all: path to configuration file for ISPN\n");
 	System.out.println("    c <UINT>   Number of [c]lients                   (%i)\n" + Definitions.PARAM_DEFAULT_CLIENTS);
 	System.out.println("    l <UINT>   Number of threads per node		 (%i)\n" + Definitions.PARAM_LOCAL_THREADS_DEFAULT);
 	System.out.println("    n <UINT>   [n]umber of user queries/transaction  (%i)\n" + Definitions.PARAM_DEFAULT_NUMBER);
@@ -56,7 +57,7 @@ public class Vacation {
 	int opterr = 0;
 
 	setDefaultParams();
-	for (int i = 0; i < argv.length; i++) {
+	for (int i = 1; i < argv.length; i++) {
 	    String arg = argv[i];
 	    if (arg.equals("-c"))
 		CLIENTS = Integer.parseInt(argv[++i]);
@@ -218,10 +219,11 @@ public class Vacation {
     public static TransactionManager txManager; 
 
     public static void main(String argv[]) throws InterruptedException, IOException, NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
-	DefaultCacheManager defaultCacheManager = new DefaultCacheManager("/home/nmld/workspace/dist-stamp/ispn.xml");
+	DefaultCacheManager defaultCacheManager = new DefaultCacheManager(argv[0]);
 	cache = defaultCacheManager.getCache();
 	txManager = cache.getAdvancedCache().getTransactionManager();
 
+	
 	Manager manager = null;
 	Client clients[];
 	long start;
@@ -238,7 +240,6 @@ public class Vacation {
 
 	if (transport.isCoordinator()) {
 	    txManager.begin();
-	    cache.markAsWriteTransaction();
 	    cache.put("START_TOKEN", "NO");
 	    cache.put("FINISH_TOKEN_" + transport.getAddress(), "NO");
 	    txManager.commit();
@@ -247,14 +248,12 @@ public class Vacation {
 	    System.out.println("[Coordinator] Starting setup");
 	    // should be inevitable
 	    txManager.begin();
-	    cache.markAsWriteTransaction();
 	    manager = vac.initializeManager();
 	    cache.put("MANAGER", manager);
 	    txManager.commit();
 	    System.out.println("[Coordinator] Finished setup");
 	} else {
 	    txManager.begin();
-	    cache.markAsWriteTransaction();
 	    cache.put("FINISH_TOKEN_" + transport.getAddress(), "NO");
 	    txManager.commit();
 	    System.out.println("[Slave] Setup finish token to no: FINISH_TOKEN_" + transport.getAddress());
@@ -277,7 +276,6 @@ public class Vacation {
 	if (transport.isCoordinator()) {
 	    System.out.println("[Coordinator] Setting token to YES");
 	    txManager.begin();
-	    cache.markAsWriteTransaction();
 	    cache.put("START_TOKEN", "YES");
 	    txManager.commit();
 	    System.out.println("[Coordinator] Token is YES");
@@ -311,13 +309,6 @@ public class Vacation {
 	System.out.println(diff + " " + aborts.get());
 
 	
-	if (transport.isCoordinator()) {
-	    txManager.begin();
-	    vac.checkTables(manager);
-	    txManager.commit();
-	    System.out.println("Tables are consistent!");
-	}
-	
 	Address coord = transport.getCoordinator();
 	List<Address> members = transport.getMembers();
 	if (vac.CLIENTS > 1) {
@@ -325,7 +316,6 @@ public class Vacation {
 		try {
 		    try {
 			txManager.begin();
-			cache.markAsWriteTransaction();
 			cache.put("FINISH_TOKEN_" + transport.getAddress(), "YES");
 			txManager.commit();
 			System.out.println("[Slave] Finished and publicized token " + "FINISH_TOKEN_" + transport.getAddress());
@@ -359,9 +349,14 @@ public class Vacation {
 			}
 		    }
 		}
+		
+		txManager.begin();
+		vac.checkTables(manager);
+		txManager.commit();
+		System.out.println("Tables are consistent!");
+		
 		try {
 		    txManager.begin();
-		    cache.markAsWriteTransaction();
 		    cache.put("FINISH_TOKEN_" + transport.getAddress(), "YES");
 		    txManager.commit();
 		    System.out.println("[Coordinator] Finished and publicized token " + "FINISH_TOKEN_" + transport.getAddress());

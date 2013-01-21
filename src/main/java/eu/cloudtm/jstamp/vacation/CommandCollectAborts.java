@@ -24,7 +24,6 @@ public abstract class CommandCollectAborts<T> {
 	    try {
 		aborts++;
 		Vacation.txManager.begin();
-		Vacation.cache.markAsWriteTransaction();
 
 		result = runTx();
 
