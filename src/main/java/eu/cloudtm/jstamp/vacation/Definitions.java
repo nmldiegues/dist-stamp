@@ -10,6 +10,8 @@ public class Definitions {
     public final static int PARAM_DEFAULT_CLIENTS = 1;
 
     public final static int PARAM_DEFAULT_NUMBER = 10;
+    
+    public final static int PARAM_LOCAL_THREADS_DEFAULT = 1;
 
     public final static int PARAM_DEFAULT_QUERIES = 90;
 

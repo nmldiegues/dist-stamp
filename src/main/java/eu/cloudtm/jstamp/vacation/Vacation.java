@@ -25,6 +25,7 @@ public class Vacation {
 	System.out.println("Usage: %s [options]\n" + appName);
 	System.out.println("\nOptions:                                             (defaults)\n");
 	System.out.println("    c <UINT>   Number of [c]lients                   (%i)\n" + Definitions.PARAM_DEFAULT_CLIENTS);
+	System.out.println("    l <UINT>   Number of threads per node		 (%i)\n" + Definitions.PARAM_LOCAL_THREADS_DEFAULT);
 	System.out.println("    n <UINT>   [n]umber of user queries/transaction  (%i)\n" + Definitions.PARAM_DEFAULT_NUMBER);
 	System.out.println("    q <UINT>   Percentage of relations [q]ueried     (%i)\n" + Definitions.PARAM_DEFAULT_QUERIES);
 	System.out.println("    r <UINT>   Number of possible [r]elations        (%i)\n" + Definitions.PARAM_DEFAULT_RELATIONS);
@@ -44,6 +45,7 @@ public class Vacation {
     public void setDefaultParams() {
 	CLIENTS = Definitions.PARAM_DEFAULT_CLIENTS;
 	NUMBER = Definitions.PARAM_DEFAULT_NUMBER;
+	LOCAL_THREADS = Definitions.PARAM_LOCAL_THREADS_DEFAULT;
 	QUERIES = Definitions.PARAM_DEFAULT_QUERIES;
 	RELATIONS = Definitions.PARAM_DEFAULT_RELATIONS;
 	TRANSACTIONS = Definitions.PARAM_DEFAULT_TRANSACTIONS;
@@ -88,7 +90,6 @@ public class Vacation {
     public Manager initializeManager() {
 	int i;
 	int t;
-	// System.out.println("Initializing manager... ");
 
 	Random randomPtr = new Random();
 	randomPtr.random_alloc();
@@ -131,17 +132,9 @@ public class Vacation {
 
 	} /* for t */
 
-	// System.out.println("done.");
 	return managerPtr;
     }
 
-    /*
-     * TODO: RBTrees are put in a single key,value? as they were VBox<RBTREE>?
-     * Or use key,value for the actual purpose that RBTrees exist? I am afraid 
-     * that changes dramatically the patterns of access though. I will start with 
-     * the first and assess the overhead which may be huge because of the large 
-     * collections going back and forth in JGroups
-     */
     public Client[] initializeClients(Manager managerPtr) {
 	Random randomPtr;
 	Client clients[];
@@ -155,31 +148,17 @@ public class Vacation {
 	int queryRange;
 	int percentUser = USER;
 
-	// System.out.println("Initializing clients... ");
-
 	randomPtr = new Random();
 	randomPtr.random_alloc();
 
 	clients = new Client[numThreads];
 
-	numTransactionPerClient = (int) ((double) numTransaction / (double) numThreads + 0.5);
+	numTransactionPerClient = (int) ((double) numTransaction / ((double) numThreads + CLIENTS) + 0.5);
 	queryRange = (int) (percentQuery / 100.0 * numRelation + 0.5);
 
 	for (i = 0; i < numThreads; i++) {
 	    clients[i] = new Client(i, managerPtr, numTransactionPerClient, numQueryPerTransaction, queryRange, percentUser);
 	}
-
-	// System.out.println("done.");
-	// System.out.println("    Transactions        = " + numTransaction);
-	// System.out.println("    Clients             = " + numClient);
-	// System.out.println("    Transactions/client = " +
-	// numTransactionPerClient);
-	// System.out.println("    Queries/transaction = " +
-	// numQueryPerTransaction);
-	// System.out.println("    Relations           = " + numRelation);
-	// System.out.println("    Query percent       = " + percentQuery);
-	// System.out.println("    Query range         = " + queryRange);
-	// System.out.println("    Percent user        = " + percentUser);
 
 	return clients;
     }
@@ -261,6 +240,7 @@ public class Vacation {
 	    txManager.begin();
 	    cache.markAsWriteTransaction();
 	    cache.put("START_TOKEN", "NO");
+	    cache.put("FINISH_TOKEN_" + transport.getAddress(), "NO");
 	    txManager.commit();
 	    System.out.println("[Coordinator] Setup token to NO");
 
@@ -325,16 +305,42 @@ public class Vacation {
 	    clients[i].join();
 	}
 
+	stop = System.currentTimeMillis();
 
+	long diff = stop - start;
+	System.out.println(diff + " " + aborts.get());
+
+	
+	if (transport.isCoordinator()) {
+	    txManager.begin();
+	    vac.checkTables(manager);
+	    txManager.commit();
+	    System.out.println("Tables are consistent!");
+	}
+	
+	Address coord = transport.getCoordinator();
 	List<Address> members = transport.getMembers();
 	if (vac.CLIENTS > 1) {
 	    if (!transport.isCoordinator()) {
 		try {
-		    txManager.begin();
-		    cache.markAsWriteTransaction();
-		    cache.put("FINISH_TOKEN_" + transport.getAddress(), "YES");
-		    txManager.commit();
-		    System.out.println("[Slave] Finished and publicized token " + "FINISH_TOKEN_" + transport.getAddress());
+		    try {
+			txManager.begin();
+			cache.markAsWriteTransaction();
+			cache.put("FINISH_TOKEN_" + transport.getAddress(), "YES");
+			txManager.commit();
+			System.out.println("[Slave] Finished and publicized token " + "FINISH_TOKEN_" + transport.getAddress());
+		    } catch (Exception e) { /* silently catch aborts/rollbacks */ }
+		    
+		    while (true) {
+			txManager.begin();
+			String token = (String) cache.get("FINISH_TOKEN_" + coord);
+			txManager.commit();
+			if (token != null && token.equals("YES")) {
+			    System.out.println("[Slave] Detected finish of Master FINISH_TOKEN_" + coord);
+			    break;
+			}
+		    }
+		    
 		} catch (Exception e) {
 		    e.printStackTrace();
 		}
@@ -353,23 +359,16 @@ public class Vacation {
 			}
 		    }
 		}
+		try {
+		    txManager.begin();
+		    cache.markAsWriteTransaction();
+		    cache.put("FINISH_TOKEN_" + transport.getAddress(), "YES");
+		    txManager.commit();
+		    System.out.println("[Coordinator] Finished and publicized token " + "FINISH_TOKEN_" + transport.getAddress());
+		} catch (Exception e) { /* silently catch aborts/rollbacks */ }
 	    }
 	}
-
-	stop = System.currentTimeMillis();
-
-	long diff = stop - start;
-	System.out.println(diff + " " + aborts.get());
-
 	
-	if (transport.isCoordinator()) {
-	    txManager.begin();
-	    vac.checkTables(manager);
-	    txManager.commit();
-	    System.out.println("Tables are consistent!");
-	}
-	
-	Thread.sleep(1000000);
 	System.exit(0);
     }
 
