@@ -311,13 +311,6 @@ public class Vacation {
 	System.out.println(diff + " " + aborts.get());
 
 	
-	if (transport.isCoordinator()) {
-	    txManager.begin();
-	    vac.checkTables(manager);
-	    txManager.commit();
-	    System.out.println("Tables are consistent!");
-	}
-	
 	Address coord = transport.getCoordinator();
 	List<Address> members = transport.getMembers();
 	if (vac.CLIENTS > 1) {
@@ -359,6 +352,12 @@ public class Vacation {
 			}
 		    }
 		}
+		
+		txManager.begin();
+		vac.checkTables(manager);
+		txManager.commit();
+		System.out.println("Tables are consistent!");
+		
 		try {
 		    txManager.begin();
 		    cache.markAsWriteTransaction();
