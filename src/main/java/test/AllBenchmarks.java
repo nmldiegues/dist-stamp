@@ -15,9 +15,9 @@ import java.util.Map;
 
 public class AllBenchmarks {
 
-    public static final int combinations = 8; 
-    public static final int[] POSSIBLE_NODES = { 1, 2, 3, 4, 1, 2, 2, 4};
-    public static final int[] POSSIBLE_THREADS = { 1, 1, 1, 1, 4, 2, 3, 2};
+    public static final int combinations = 4; 
+    public static final int[] POSSIBLE_NODES = { 1, 2, 3, 4, 5, 6, 7, 8};
+    public static final int[] POSSIBLE_THREADS = { 1, 1, 1, 1, 1, 1, 1, 1};
     public static final String[] TESTS = { "gmu", "ssi" };
     public static final int ATTEMPTS = 1;
 

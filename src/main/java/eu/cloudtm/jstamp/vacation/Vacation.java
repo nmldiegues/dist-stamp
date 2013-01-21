@@ -368,6 +368,8 @@ public class Vacation {
 	    }
 	}
 	
+	Thread.sleep(5000);
+	
 	System.exit(0);
     }
 

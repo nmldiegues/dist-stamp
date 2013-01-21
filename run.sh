@@ -15,35 +15,35 @@ combs[1]="-c 1 -l 1"
 combs[2]="-c 2 -l 1"
 combs[3]="-c 3 -l 1"
 combs[4]="-c 4 -l 1"
-combs[5]="-c 1 -l 4"
-combs[6]="-c 2 -l 2"
-combs[7]="-c 2 -l 3"
-combs[8]="-c 4 -l 2"
+combs[5]="-c 5 -l 1"
+combs[6]="-c 6 -l 1"
+combs[7]="-c 7 -l 1"
+combs[8]="-c 8 -l 1"
 
 nodes[1]="1"
 nodes[2]="2"
 nodes[3]="3"
 nodes[4]="4"
-nodes[5]="1"
-nodes[6]="2"
-nodes[7]="2"
-nodes[8]="4"
+nodes[5]="5"
+nodes[6]="6"
+nodes[7]="7"
+nodes[8]="8"
 
-for ispn in 1 2
+for ispn in 2
 do
 	cp $prefix/ispn-${tm[$ispn]}.xml ispn.xml
 	mvn clean compile
 	cp $prefix/jgroups.xml target/classes/jgroups.xml
 	cd target;
 	cd classes;
-	for t in 1 2 3 4 5 6 7 8
+	for t in 3 4 5 6 7 8
         do
         	for attempt in 1
                 do
-			echo "sem -j ${nodes[$t]} java $minMem $maxMem -cp $cp:. eu.cloudtm.jstamp.vacation.Vacation $configFile ${combs[$t]} -n 4 -q 60 -u 98 -r 128 -t 100 >> $prefix/results/${tm[$ispn]}-$t-$i-$attempt.out"
+			echo "sem -j${nodes[$t]} ${combs[$t]} -n 4 -q 60 -u 98 -r 256 -t 4000 >> $prefix/results/${tm[$ispn]}-$t-$i-$attempt.out"
 			for i in `seq 1 ${nodes[$t]}`
 			do
-				sem -j ${nodes[$t]} java $minMem $maxMem -cp $cp:. eu.cloudtm.jstamp.vacation.Vacation $configFile ${combs[$t]} -n 4 -q 60 -u 98 -r 128 -t 100 >> $prefix/results/${tm[$ispn]}-$t-$i-$attempt.out
+				sem -j${nodes[$t]} java $minMem $maxMem -cp $cp:. eu.cloudtm.jstamp.vacation.Vacation $configFile ${combs[$t]} -n 4 -q 60 -u 98 -r 256 -t 4000 >> $prefix/results/${tm[$ispn]}-$t-$i-$attempt.out
 			done
 			sem --wait
                 done
