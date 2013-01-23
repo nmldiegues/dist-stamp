@@ -2,6 +2,7 @@ package eu.cloudtm.microbenchmark;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.transaction.HeuristicMixedException;
@@ -105,11 +106,16 @@ public class Micro {
 	    txManager.begin();
 	    cache.markAsWriteTransaction();
 	    
+	    Random random = new Random();
+	    IntSet set = null;
 	    if (vac.SET.equals("ll")) {
-		cache.put("SET", new IntSetLinkedList(true));
+		set = new IntSetLinkedList(true);
 	    } else if (vac.SET.equals("sl")) {
-		cache.put("SET", new IntSetSkipList(true));
+		set = new IntSetSkipList(true);
 	    }
+	    for (int i = 0; i < vac.ITEMS; i++)
+		set.add(random.nextInt(vac.RANGE));
+	    cache.put("SET", set);
 	    
 	    txManager.commit();
 	    System.out.println("[Coordinator] Finished setup");

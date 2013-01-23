@@ -43,6 +43,24 @@ public class IntSetLinkedList implements IntSet, Serializable {
 	m_first = min;
     }
 
+    public boolean add(int value) {
+	boolean result;
+
+	Node previous = m_first;
+	Node next = previous.getNext();
+	int v;
+	while ((v = next.getValue()) < value) {
+	    previous = next;
+	    next = previous.getNext();
+	}
+	result = v != value;
+	if (result) {
+	    previous.setNext(new Node(value, next));
+	}
+
+	return result;
+    }
+    
     public boolean add(final int value, final Client c) {
 	CommandCollectAborts<Boolean> cmd = new CommandCollectAborts<Boolean>() {
 	    @Override

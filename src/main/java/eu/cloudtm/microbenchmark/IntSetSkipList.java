@@ -79,6 +79,43 @@ public class IntSetSkipList implements IntSet, Serializable {
 	return l;
     }
 
+    public boolean add(int value) {
+	boolean result;
+
+	Node[] update = new Node[m_maxLevel + 1];
+	Node node = m_head;
+
+	for (int i = getLevel(); i >= 0; i--) {
+	    Node next = node.getForward(i);
+	    while (next.getValue() < value) {
+		node = next;
+		next = node.getForward(i);
+	    }
+	    update[i] = node;
+	}
+	node = node.getForward(0);
+
+	if (node.getValue() == value) {
+	    result = false;
+	} else {
+	    int level = randomLevel();
+	    if (level > getLevel()) {
+		for (int i = getLevel() + 1; i <= level; i++)
+		    update[i] = m_head;
+		setLevel(level);
+	    }
+	    node = new Node(level, value);
+	    for (int i = 0; i <= level; i++) {
+		node.setForward(i, update[i].getForward(i));
+		update[i].setForward(i, node);
+	    }
+	    result = true;
+	}
+
+
+	return result;
+    }
+    
     public boolean add(final int value, final Client c) {
 	CommandCollectAborts<Boolean> cmd = new CommandCollectAborts<Boolean>() {
 	    @Override

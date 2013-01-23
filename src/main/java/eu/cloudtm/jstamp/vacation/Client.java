@@ -4,7 +4,6 @@ import static eu.cloudtm.jstamp.vacation.Vacation.cache;
 import static eu.cloudtm.jstamp.vacation.Vacation.txManager;
 
 public class Client extends Thread {
-    final int id;
     final Manager managerPtr;
     final Random randomPtr;
     final int numOperation;
@@ -23,7 +22,6 @@ public class Client extends Thread {
     public Client(int id, Manager managerPtr, int numOperation, int numQueryPerTransaction, int queryRange, int percentUser) {
 	this.randomPtr = new Random();
 	this.randomPtr.random_alloc();
-	this.id = id;
 	this.managerPtr = managerPtr;
 	randomPtr.random_seed(id);
 	this.numOperation = numOperation;
