@@ -353,7 +353,9 @@ public class Vacation {
 		    }
 		}
 		
+		System.out.println("[Coordinator] Checking tables");
 		txManager.begin();
+		cache.markAsWriteTransaction();
 		vac.checkTables(manager);
 		txManager.commit();
 		System.out.println("Tables are consistent!");

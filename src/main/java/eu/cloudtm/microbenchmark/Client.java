@@ -12,9 +12,6 @@ public class Client extends Thread implements Serializable {
 
     final private IntSet m_set;
     final private int m_range;
-    int m_nb_add;
-    int m_nb_remove;
-    int m_nb_contains;
     final private int m_rate;
     boolean m_write;
     int m_last;
@@ -39,7 +36,6 @@ public class Client extends Thread implements Serializable {
 	this.m_set = set;
 	this.m_range = m_range;
 	this.m_rate = m_rate;
-	m_nb_add = m_nb_remove = m_nb_contains = 0;
 	this.m_write = true;
 	m_random = new Random();
     }
@@ -58,16 +54,13 @@ public class Client extends Thread implements Serializable {
 		m_last = m_random.nextInt(m_range);
 		if (m_set.add(m_last, this))
 		    m_write = false;
-		m_nb_add++;
 	    } else {
 		m_set.remove(m_last, this);
 		if (phase == TEST_PHASE)
-		    m_nb_remove++;
 		m_write = true;
 	    }
 	} else {
 	    m_set.contains(m_random.nextInt(m_range), this);
-	    m_nb_contains++;
 	}
     }
 
