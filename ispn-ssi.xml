@@ -55,6 +55,12 @@
                     invalidationThreshold="-1"
                     cleanupTaskFrequency="600000" />
         </clustering>
+        <garbageCollector
+                enabled="true"
+                transactionThreshold="1000"
+                versionGCMaxIdle="60"
+                viewGCBackOff="120"
+                l1GCInterval="60"/>
         <customInterceptors>
             <!--  <interceptor
                     after="org.infinispan.interceptors.InvocationContextInterceptor"
