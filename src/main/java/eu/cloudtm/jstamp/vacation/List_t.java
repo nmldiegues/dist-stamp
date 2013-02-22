@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 public class List_t<E> implements Iterable<E>, Serializable{
 
@@ -13,8 +14,8 @@ public class List_t<E> implements Iterable<E>, Serializable{
     public List_t() { }
     
     public List_t(String cacheKey) {
-	this.cacheKey = cacheKey;
-	Vacation.cache.put(cacheKey, (Cons<E>) Cons.empty());
+	this.cacheKey = UUID.randomUUID().toString() + ":" + cacheKey;
+	Vacation.cache.put(this.cacheKey, (Cons<E>) Cons.empty());
     }
     
     private void putElements(Cons<E> elems) {

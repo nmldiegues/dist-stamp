@@ -1,29 +1,31 @@
 package eu.cloudtm.microbenchmark;
 
 import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.locks.LockSupport;
-
-import eu.cloudtm.microbenchmark.IntSetLinkedList.Node;
+import java.util.Random;
+import java.util.UUID;
 
 public class IntSetSkipList implements IntSet, Serializable {
 
     public class Node implements Serializable {
 	/* final */ private int m_value;
 	/* final */ private int level;
+	/* final */ private String uuid; 
 
 	public Node(int level, int value) {
 	    this.level = level;
 	    this.m_value = value;
+	    this.uuid = UUID.randomUUID().toString();
 	}
 
 	public void setForward(int index, Node node) {
-	    Micro.cache.put(m_value + ":" + index + ":next", node);
+//	    if (node == this || node.getValue() == this.m_value) {
+//		System.err.println("here!");
+//	    }
+	    Micro.cache.put(uuid + ":" + m_value + ":" + index + ":next", node);
 	}
 
 	public Node getForward(int index) {
-	    return (Node) Micro.cache.get(m_value + ":" + index + ":next");
+	    return (Node) Micro.cache.get(uuid + ":" + m_value + ":" + index + ":next");
 	}
 
 	public int getValue() {
@@ -88,6 +90,9 @@ public class IntSetSkipList implements IntSet, Serializable {
 	for (int i = getLevel(); i >= 0; i--) {
 	    Node next = node.getForward(i);
 	    while (next.getValue() < value) {
+//		if (node == next || node.getValue() == next.getValue()) {
+//		    System.err.println("bla");
+//		}
 		node = next;
 		next = node.getForward(i);
 	    }
@@ -124,13 +129,17 @@ public class IntSetSkipList implements IntSet, Serializable {
 
 		Node[] update = new Node[m_maxLevel + 1];
 		Node node = m_head;
-
-		for (int i = getLevel(); i >= 0; i--) {
+		int level = getLevel();
+		
+		for (int i = level; i >= 0; i--) {
 		    Node next = node.getForward(i);
+//		    System.err.println(Thread.currentThread().getId() + "] out");
 		    while (next.getValue() < value) {
+//			System.err.println(Thread.currentThread().getId() + "] " + next.getValue() + " < " + value + " " + i);
 			node = next;
 			next = node.getForward(i);
 		    }
+//		    System.err.println(Thread.currentThread().getId() + "] after");
 		    update[i] = node;
 		}
 		node = node.getForward(0);
@@ -138,9 +147,9 @@ public class IntSetSkipList implements IntSet, Serializable {
 		if (node.getValue() == value) {
 		    result = false;
 		} else {
-		    int level = randomLevel();
-		    if (level > getLevel()) {
-			for (int i = getLevel() + 1; i <= level; i++)
+		    int newLevel = randomLevel();
+		    if (newLevel > level) {
+			for (int i = level + 1; i <= level; i++)
 			    update[i] = m_head;
 			setLevel(level);
 		    }
@@ -171,7 +180,9 @@ public class IntSetSkipList implements IntSet, Serializable {
 		Node[] update = new Node[m_maxLevel + 1];
 		Node node = m_head;
 
-		for (int i = getLevel(); i >= 0; i--) {
+		int level = getLevel();
+		
+		for (int i = level; i >= 0; i--) {
 		    Node next = node.getForward(i);
 		    while (next.getValue() < value) {
 			node = next;
@@ -184,13 +195,15 @@ public class IntSetSkipList implements IntSet, Serializable {
 		if (node.getValue() != value) {
 		    result = false;
 		} else {
-		    int auxLimit = getLevel();
-		    for (int i = 0; i <= auxLimit; i++) {
-			if (update[i].getForward(i) == node)
+		    for (int i = 0; i <= level; i++) {
+			if (update[i].getForward(i).getValue() == node.getValue())
 			    update[i].setForward(i, node.getForward(i));
 		    }
-		    while (getLevel() > 0 && m_head.getForward(getLevel()).getForward(0) == null)
-			setLevel(getLevel() - 1);
+		    
+		    while (level > 0 && m_head.getForward(level).getForward(0) == null) {
+			level--;
+			setLevel(level);
+		    }			
 		    result = true;
 		}
 

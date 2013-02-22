@@ -75,6 +75,7 @@ import static eu.cloudtm.jstamp.vacation.Vacation.cache;
 import static eu.cloudtm.jstamp.vacation.Vacation.txManager;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Reservation implements Comparable<Reservation>, Serializable {
     /* final */ int id;
@@ -88,7 +89,7 @@ public class Reservation implements Comparable<Reservation>, Serializable {
     
     public Reservation(String type, int id, int numTotal, int price) {
 	this.id = id;
-	this.PREFIX = "Reservation:" + type + ":" + id + ":";
+	this.PREFIX = UUID.randomUUID().toString() + ":" + "Reservation:" + type + ":" + id + ":";
 	cache.put(PREFIX + NUM_USED, 0);
 	cache.put(PREFIX + NUM_FREE, numTotal);
 	cache.put(PREFIX + NUM_TOTAL, numTotal);

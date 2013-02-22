@@ -56,7 +56,7 @@
                     cleanupTaskFrequency="600000" />
         </clustering>
         <garbageCollector
-                enabled="true"
+                enabled="false"
                 transactionThreshold="1000"
                 versionGCMaxIdle="1"
                 viewGCBackOff="120"

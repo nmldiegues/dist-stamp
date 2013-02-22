@@ -1,15 +1,18 @@
 package eu.cloudtm.microbenchmark;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 
 public class IntSetLinkedList implements IntSet, Serializable {
 
     public class Node implements Serializable {
 	/* final */ private int m_value;
+	private String uuid;
 
 	public Node(int value, Node next) {
 	    m_value = value;
+	    this.uuid = UUID.randomUUID().toString();
 	    setNext(next);
 	}
 
@@ -23,12 +26,12 @@ public class IntSetLinkedList implements IntSet, Serializable {
 
 	public void setNext(Node next) {
 	    if (next != null) {
-		Micro.cache.put(m_value + ":next", next);
+		Micro.cache.put(m_value + ":" + uuid + ":next", next);
 	    }
 	}
 
 	public Node getNext() {
-	    return (Node) Micro.cache.get(m_value + ":next");
+	    return (Node) Micro.cache.get(m_value + ":" + uuid + ":next");
 	}
     }
 

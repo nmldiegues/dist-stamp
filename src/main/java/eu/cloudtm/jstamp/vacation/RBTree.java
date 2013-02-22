@@ -1,6 +1,7 @@
 package eu.cloudtm.jstamp.vacation;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 
 public class RBTree<K extends Comparable<K>, V> implements Serializable {
