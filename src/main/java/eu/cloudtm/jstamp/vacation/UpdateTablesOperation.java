@@ -82,6 +82,7 @@ public class UpdateTablesOperation extends Operation {
 		    assert (false);
 		}
 	    }
+	    managerPtr.manager_doCustomer();
 	}
     }
 

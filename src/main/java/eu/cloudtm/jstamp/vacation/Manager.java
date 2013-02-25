@@ -76,9 +76,8 @@ package eu.cloudtm.jstamp.vacation;
  * =============================================================================
  */
 
-import static eu.cloudtm.jstamp.vacation.Vacation.cache;
-
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Manager implements Serializable {
     /* final */ RBTree<Integer, Reservation> carTable;
@@ -548,5 +547,9 @@ public class Manager implements Serializable {
      */
     boolean manager_cancelFlight(int customerId, int flightId) {
 	return cancel(flightTable, customerTable, customerId, flightId, Definitions.RESERVATION_FLIGHT);
+    }
+
+    public void manager_doCustomer() {
+	Vacation.cache.put(UUID.randomUUID().toString(), "customer");
     }
 }

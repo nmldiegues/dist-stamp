@@ -35,7 +35,7 @@
                 eagerLockSingleNode="false"
                 use1PcForAutoCommitTransactions="false"
                 autoCommit="true"
-                ssiValidation="true"
+                ssiValidation="false"
                 />
         <jmxStatistics
                 enabled="true"/>

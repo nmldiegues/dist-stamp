@@ -21,6 +21,8 @@ public class DeleteCustomerOperation extends Operation {
 		int bill = managerPtr.manager_queryCustomerBill(customerId);
 		if (bill >= 0) {
 		    managerPtr.manager_deleteCustomer(customerId);
+		} else {
+		    managerPtr.manager_doCustomer();
 		}
 		return null;
 	    }

@@ -85,7 +85,8 @@ public class MakeReservationOperation extends Operation {
 
 	if (isFound) {
 	    manager.manager_addCustomer(customerId);
-	}
+	    manager.manager_doCustomer();
+	} 
 	if (maxIds[Definitions.RESERVATION_CAR] > 0) {
 	    manager.manager_reserveCar(customerId, maxIds[Definitions.RESERVATION_CAR]);
 	}

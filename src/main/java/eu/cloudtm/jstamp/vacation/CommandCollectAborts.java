@@ -29,7 +29,7 @@ public abstract class CommandCollectAborts<T> {
 		result = runTx();
 
 		Vacation.txManager.commit();
-System.err.println(Thread.currentThread().getId() + "] committed");
+//System.err.println(Thread.currentThread().getId() + "] committed");
 		txFinished = true;
 		return result;
 	    } catch (CacheException ce) {
@@ -60,7 +60,7 @@ System.err.println(Thread.currentThread().getId() + "] committed");
 	    }
 	    // Pedro had this wait here.  Why?
 	    // waitingBeforeRetry();
-	    System.err.println(Thread.currentThread().getId() + "] \trestart");
+//	    System.err.println(Thread.currentThread().getId() + "] \trestart");
 	}
 	// never reached
 	throw new RuntimeException("code never reached");
