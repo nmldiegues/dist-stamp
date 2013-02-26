@@ -1,6 +1,5 @@
 package eu.cloudtm.jstamp.vacation;
 
-import javax.transaction.Transaction;
 
 public class MakeReservationOperation extends Operation {
 
@@ -11,6 +10,7 @@ public class MakeReservationOperation extends Operation {
     final private int[] maxIds;
     final private int customerId;
     final private int numQuery;
+    final private boolean readOnly;
 
     public MakeReservationOperation(Manager manager, Random random, int numQueryPerTx, int queryRange) {
 	this.manager = manager;
@@ -38,6 +38,8 @@ public class MakeReservationOperation extends Operation {
 	    types[n] = random.random_generate() % Definitions.NUM_RESERVATION_TYPE;
 	    ids[n] = baseIds[n % 20];
 	}
+	
+	this.readOnly = (random.random_generate() % 100) <= queryRange;
     }
 
     @Override
@@ -46,6 +48,11 @@ public class MakeReservationOperation extends Operation {
 	    public Void runTx() {
 		makeReservationNotNested();
 		return null;
+	    }
+
+	    @Override
+	    public boolean isReadOnly() {
+		return MakeReservationOperation.this.readOnly;
 	    }
 	};
 	cmd.doIt();
@@ -83,18 +90,20 @@ public class MakeReservationOperation extends Operation {
 	    }
 	}
 
-	if (isFound) {
-	    manager.manager_addCustomer(customerId);
-	    manager.manager_doCustomer();
-	} 
-	if (maxIds[Definitions.RESERVATION_CAR] > 0) {
-	    manager.manager_reserveCar(customerId, maxIds[Definitions.RESERVATION_CAR]);
-	}
-	if (maxIds[Definitions.RESERVATION_FLIGHT] > 0) {
-	    manager.manager_reserveFlight(customerId, maxIds[Definitions.RESERVATION_FLIGHT]);
-	}
-	if (maxIds[Definitions.RESERVATION_ROOM] > 0) {
-	    manager.manager_reserveRoom(customerId, maxIds[Definitions.RESERVATION_ROOM]);
+	if (!readOnly) {
+	    if (isFound) {
+		manager.manager_addCustomer(customerId);
+		manager.manager_doCustomer();
+	    } 
+	    if (maxIds[Definitions.RESERVATION_CAR] > 0) {
+		manager.manager_reserveCar(customerId, maxIds[Definitions.RESERVATION_CAR]);
+	    }
+	    if (maxIds[Definitions.RESERVATION_FLIGHT] > 0) {
+		manager.manager_reserveFlight(customerId, maxIds[Definitions.RESERVATION_FLIGHT]);
+	    }
+	    if (maxIds[Definitions.RESERVATION_ROOM] > 0) {
+		manager.manager_reserveRoom(customerId, maxIds[Definitions.RESERVATION_ROOM]);
+	    }
 	}
     }
 

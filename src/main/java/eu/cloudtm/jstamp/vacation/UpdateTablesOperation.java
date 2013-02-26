@@ -47,6 +47,11 @@ public class UpdateTablesOperation extends Operation {
 		updateTablesNotNested();
 		return null;
 	    }
+
+	    @Override
+	    public boolean isReadOnly() {
+		return false;
+	    }
 	};
 	cmd.doIt();
 	if (cmd.getAborts() > 0) {

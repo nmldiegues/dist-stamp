@@ -35,7 +35,7 @@
                 eagerLockSingleNode="false"
                 use1PcForAutoCommitTransactions="false"
                 autoCommit="true"
-                ssiValidation="false"
+                ssiValidation="true"
                 />
         <jmxStatistics
                 enabled="true"/>
@@ -46,7 +46,7 @@
                     replTimeout="15000" />
             <hash
                     numVirtualNodes="100"
-                    numOwners="1"
+                    numOwners="2"
                     />
             <l1
                     enabled="false"

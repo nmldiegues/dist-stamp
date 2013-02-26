@@ -1,4 +1,4 @@
-package eu.cloudtm.jstamp.vacation;
+package eu.cloudtm.synthetic;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -25,14 +25,14 @@ public abstract class CommandCollectAborts<T> {
 	while (!txFinished) {
 	    try {
 		aborts++;
-		Vacation.txManager.begin();
+		Synthetic.txManager.begin();
 		if (!isReadOnly()) {
-		    Vacation.cache.markAsWriteTransaction();
+		    Synthetic.cache.markAsWriteTransaction();
 		}
 
 		result = runTx();
 
-		Vacation.txManager.commit();
+		Synthetic.txManager.commit();
 //System.err.println(Thread.currentThread().getId() + "] committed");
 		txFinished = true;
 		return result;
@@ -51,7 +51,7 @@ public abstract class CommandCollectAborts<T> {
 	    } finally {
 		if (!txFinished) {
 		    try {
-			Vacation.txManager.rollback();
+			Synthetic.txManager.rollback();
 		    } catch(IllegalStateException ise) {
 			// If the transaction is in a state where it cannot be rolled back.
 			// Pedro -- happen when the commit fails. When commit fails, it invokes the rollback().
