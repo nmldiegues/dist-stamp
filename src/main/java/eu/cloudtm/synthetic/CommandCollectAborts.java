@@ -64,7 +64,7 @@ public abstract class CommandCollectAborts<T> {
 	    }
 	    // Pedro had this wait here.  Why?
 	    // waitingBeforeRetry();
-//	    System.err.println(Thread.currentThread().getId() + "] \trestart");
+//System.err.println(Thread.currentThread().getId() + "] \trestart");
 	}
 	// never reached
 	throw new RuntimeException("code never reached");

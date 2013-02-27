@@ -46,7 +46,7 @@ public class Synthetic {
     }
 
     public static final AtomicInteger aborts = new AtomicInteger(0);
-    public static Cache<String, Object> cache;
+    public static Cache<Object, Object> cache;
     public static TransactionManager txManager; 
 
     public static void main(String argv[]) throws InterruptedException, IOException, NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
@@ -67,6 +67,16 @@ public class Synthetic {
 
 	Thread.sleep(3000);
 
+	Address myAddr = transport.getAddress();
+	int i = 0;
+	int myIndex = -1;
+	for (Address addr : transport.getMembers()) {
+	    if (myAddr.equals(addr)) {
+		myIndex = i;
+	    }
+	    i++;
+	}
+	
 	if (transport.isCoordinator()) {
 	    txManager.begin();
 	    cache.markAsWriteTransaction();
@@ -80,7 +90,7 @@ public class Synthetic {
 	    txManager.begin();
 	    cache.markAsWriteTransaction();
 	    
-	    Client.setupClashes(vac.NUMBER);
+	    Client.setupClashes(vac.CLIENTS, vac.NUMBER);
 	    cache.put("MANAGER", "Manager");
 	    txManager.commit();
 	    System.out.println("[Coordinator] Finished setup");
@@ -102,7 +112,7 @@ public class Synthetic {
 	    txManager.commit();
 	}
 	System.out.println("[Any] Got the manager: " + manager);
-	client = new Client(vac.NUMBER / vac.CLIENTS, vac.USER, vac.TRANSACTIONS, vac.MODE);
+	client = new Client(myIndex, vac.CLIENTS, vac.NUMBER, vac.USER, vac.TRANSACTIONS, vac.MODE);
 
 	Thread.sleep(2000);
 
