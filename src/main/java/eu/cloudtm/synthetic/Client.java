@@ -48,8 +48,14 @@ public class Client extends Thread {
     public static void setupClashes(final int clients, final int number) {
 	for (int i = 0; i < (number / clients); i++) {
 	    for (int k = 0; k < clients; k++) {
-		Synthetic.cache.put((k * (number / clients)) + i, 0);
+		int key = ((k * (number / clients)) + i);
+		Synthetic.cache.put(new MagicKey(key), 0);
 	    }
+	}
+	int k = -1;
+	for (int i = 0; i < clients; i++) {
+	    Synthetic.cache.put(new MagicKey(i, k), 0);
+	    k--;
 	}
     }
 
@@ -137,9 +143,9 @@ public class Client extends Thread {
 	    CommandCollectAborts<Void> cmd =new CommandCollectAborts<Void>() {
 		@Override
 		public Void runTx() {
-		    Synthetic.cache.get(r);;
+		    Synthetic.cache.get(new MagicKey(r));
 		    if (isWrite) {
-			Synthetic.cache.put(r, 42);
+			Synthetic.cache.put(new MagicKey(r), 42);
 		    }
 		    return null;
 		}
@@ -179,25 +185,54 @@ public class Client extends Thread {
 //			Synthetic.cache.get("clash" + number);
 //		    }
 //		    Synthetic.cache.put(UUID.randomUUID().toString(), "a");
-		    int baseIndex = -1;
-		    if (writeRemote) {
-			baseIndex = segment * (number / clients);
-		    } else {
-			baseIndex = myIndex * (number / clients);
-		    }
-		    int idxToUse = baseIndex + r;
 		    
-		    String output = "Write remote? " + writeRemote + " " + (writeRemote ? segment : myIndex) + " base index " + baseIndex + " r " + r;
-		    for (int k = 0; k < 20; k++) {
-			int idx = Math.abs((idxToUse + k) % number);
-			if (idx >= (baseIndex + (number / clients)) || idx < baseIndex) {
-			    break;
+		    
+//		    int baseIndex = -1;
+//		    if (writeRemote) {
+//			baseIndex = segment * (number / clients);
+//		    } else {
+//			baseIndex = myIndex * (number / clients);
+//		    }
+//		    int idxToUse = baseIndex + r;
+//		    
+//		    String output = "Write remote? " + writeRemote + " " + (writeRemote ? segment : myIndex) + " base index " + baseIndex + " r " + r;
+//		    for (int k = 0; k < 20; k++) {
+//			int idx = Math.abs((idxToUse + k) % number);
+//			if (idx >= (baseIndex + (number / clients)) || idx < baseIndex) {
+//			    break;
+//			}
+//			output += " " + idx;
+//			Synthetic.cache.get(new MagicKey(idx));
+//		    }
+////		    System.out.println(output);
+//		    if (writeRemote) {
+//			Synthetic.cache.put(new MagicKey(idxToUse), 42);
+//		    }
+		    
+		    int baseIndex = 0;
+		    if (myIndex == 0) {
+			if (writeRemote) {
+			    baseIndex = (number / clients);
 			}
-			output += " " + idx;
-			Synthetic.cache.get(idx);
+		    } else {
+			if (!writeRemote) {
+			    baseIndex = (number / clients);
+			}			
 		    }
+		    String output = "Node: " + myIndex + " Write remote? " + writeRemote + " " + baseIndex + " " + (writeRemote ? (baseIndex + r) : "") + " --- ";
+		    if (!writeRemote) {
+			for (int k = 0 ; k < (number / clients); k++) {
+			    Synthetic.cache.get(new MagicKey(baseIndex + k));
+			    output += " " + (baseIndex + k);
+			}
+		    }
+		    if (writeRemote) {
+			Synthetic.cache.put(new MagicKey(baseIndex + r), 2);
+			output += " wrote to: " + (baseIndex + r);
+		    }
+		    Synthetic.cache.put(new MagicKey((-myIndex)-1), 0);
 //		    System.out.println(output);
-		    Synthetic.cache.put(idxToUse, 42);
+		    
 		    return null;
 		}
 

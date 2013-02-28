@@ -10,7 +10,6 @@ import org.infinispan.remoting.transport.Address;
 public class CustomHashing extends DefaultConsistentHash {
 
     private Address[] addresses;
-    private int lastIndex = 0;
 
     @Override
     public void setCaches(Set<Address> newCaches) {
@@ -30,14 +29,43 @@ public class CustomHashing extends DefaultConsistentHash {
 	}
 	
 	List<Address> result = new ArrayList<Address>(1);
-	if (key instanceof Integer) {
-	    result.add(addresses[lastIndex]);
-	    System.out.println(key + " -> " + lastIndex);
-	    lastIndex = (lastIndex + 1) % addresses.length;
+	if (key instanceof MagicKey) {
+	    result.add(addresses[((MagicKey)key).node]);
 	    return result;
 	} else {
-	    return super.locate(key, replCount);
+	    result.add(addresses[0]);
+	    return result;
+	}
+    }
+    
+    @Override
+    public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
+	if (replCount != 1) {
+	    throw new RuntimeException("Not supported replCount: " + replCount);
+	}
+	
+	if (key instanceof MagicKey) {
+	    return target.equals(addresses[((MagicKey)key).node]);
+	} else {
+	    return target.equals(addresses[0]);
 	}
     }
 
+    @Override
+    public Address primaryLocation(Object key) {
+	if (key instanceof MagicKey) {
+	    return addresses[((MagicKey)key).node];
+	} else {
+	    return addresses[0];
+	}
+    }
+
+    public int getMyId(Address addr) {
+	for (int i = 0; i < addresses.length; i++) {
+	    if (addresses[i].equals(addr)) {
+		return i;
+	    }
+	}
+	throw new RuntimeException("Could not find addr: " + addr);
+    }
 }

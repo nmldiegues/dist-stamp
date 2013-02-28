@@ -62,20 +62,15 @@ public class Synthetic {
 	Synthetic vac = new Synthetic();
 	vac.parseArgs(argv);
 
+	MagicKey.CLIENTS = vac.CLIENTS;
+	MagicKey.NUMBER = vac.NUMBER;
+	
 	Transport transport = defaultCacheManager.getTransport();
 	while (transport.getMembers().size() < vac.CLIENTS) {}
 
 	Thread.sleep(3000);
 
-	Address myAddr = transport.getAddress();
-	int i = 0;
-	int myIndex = -1;
-	for (Address addr : transport.getMembers()) {
-	    if (myAddr.equals(addr)) {
-		myIndex = i;
-	    }
-	    i++;
-	}
+	int myIndex = ((CustomHashing)cache.getAdvancedCache().getDistributionManager().getConsistentHash()).getMyId(transport.getAddress());
 	
 	if (transport.isCoordinator()) {
 	    txManager.begin();
@@ -148,6 +143,7 @@ public class Synthetic {
 
 	Address coord = transport.getCoordinator();
 	List<Address> members = transport.getMembers();
+	
 	if (vac.CLIENTS > 1) {
 	    if (!transport.isCoordinator()) {
 		try {
